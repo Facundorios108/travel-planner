@@ -1,0 +1,16 @@
+{
+  "name": "StayFinder Travel Planner",
+  "short_name": "StayFinder",
+  "description": "Planifica tus viajes con IA y mantén tus gastos bajo control.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

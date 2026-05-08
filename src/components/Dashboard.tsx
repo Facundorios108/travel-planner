@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
 import { Trip } from "@/types/travel";
-import { CalendarDays, Wallet, User, Plus, Loader2, Bell } from "lucide-react";
+import { CalendarDays, Wallet, User, Plus, Loader2, Bell, Wand2 } from "lucide-react";
 import EmptyState from "./EmptyState";
 import TripList from "./TripList";
 import AddTrip from "./AddTrip";
 import { ThemeToggle } from "./ThemeToggle";
 import UserProfile from "./UserProfile";
+import AITripPlanner from "./AITripPlanner";
 
 export default function Dashboard() {
     const { user, signOut } = useAuth();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<"home" | "docs" | "profile">("home");
+    const [activeTab, setActiveTab] = useState<"home" | "ai" | "docs" | "profile">("home");
     const [isAddingTrip, setIsAddingTrip] = useState(false);
     const [indexErrorLink, setIndexErrorLink] = useState<string | null>(null);
 
@@ -48,8 +49,8 @@ export default function Dashboard() {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             const tabUrl = params.get("tab");
-            if (tabUrl === "profile" || tabUrl === "docs" || tabUrl === "home") {
-                setActiveTab(tabUrl);
+            if (tabUrl === "profile" || tabUrl === "docs" || tabUrl === "home" || tabUrl === "ai") {
+                setActiveTab(tabUrl as any);
             }
         }
     }, []);
@@ -101,17 +102,16 @@ export default function Dashboard() {
         <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-[430px]">
             {/* Stitch Minimal Header */}
             {activeTab !== "profile" && (
-                <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md">
+                <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
                     <div className="flex items-center gap-3">
-                        {/* Placeholder para logo de empresa */}
-                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500/20 bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
                             SF
                         </div>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">StayFinder</h1>
+                        <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">StayFinder</h1>
                     </div>
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
-                        <button className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+                        <button className="w-10 h-10 flex items-center justify-center rounded-2xl glass text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all">
                             <Bell size={20} />
                         </button>
                     </div>
@@ -138,6 +138,12 @@ export default function Dashboard() {
                                 <Plus size={28} className="transition-transform group-hover:rotate-90" />
                             </button>
                         )}
+                    </div>
+                )}
+
+                {activeTab === "ai" && (
+                    <div className="px-6 pt-4 pb-12">
+                        <AITripPlanner />
                     </div>
                 )}
 
@@ -174,33 +180,44 @@ export default function Dashboard() {
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[430px] bg-white/95 backdrop-blur-md border-t border-slate-200">
-                <div className="flex justify-around items-center px-4 py-3 pb-safe-bottom">
+            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-[400px] z-50 glass rounded-3xl border border-white/20 dark:border-slate-800/50 shadow-2xl overflow-hidden">
+                <div className="flex justify-around items-center px-1 py-3">
                     <button
                         onClick={() => setActiveTab("home")}
-                        className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === "home" ? "text-blue-500" : "text-slate-400 hover:text-slate-600"}`}
+                        className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "home" ? "text-blue-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
-                        <CalendarDays size={24} strokeWidth={activeTab === "home" ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">Viajes</span>
+                        <CalendarDays size={20} strokeWidth={activeTab === "home" ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold">Viajes</span>
+                        {activeTab === "home" && <div className="w-1 h-1 bg-blue-500 rounded-full mt-0.5"></div>}
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("ai")}
+                        className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "ai" ? "text-indigo-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
+                    >
+                        <Wand2 size={20} strokeWidth={activeTab === "ai" ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold">IA Planner</span>
+                        {activeTab === "ai" && <div className="w-1 h-1 bg-indigo-500 rounded-full mt-0.5"></div>}
                     </button>
 
                     <button
                         onClick={() => setActiveTab("docs")}
-                        className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === "docs" ? "text-blue-500" : "text-slate-400 hover:text-slate-600"}`}
+                        className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "docs" ? "text-blue-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
-                        <Wallet size={24} strokeWidth={activeTab === "docs" ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">Docs</span>
+                        <Wallet size={20} strokeWidth={activeTab === "docs" ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold">Docs</span>
+                        {activeTab === "docs" && <div className="w-1 h-1 bg-blue-500 rounded-full mt-0.5"></div>}
                     </button>
 
                     <button
                         onClick={() => setActiveTab("profile")}
-                        className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === "profile" ? "text-blue-500" : "text-slate-400 hover:text-slate-600"}`}
+                        className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "profile" ? "text-blue-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
-                        <User size={24} strokeWidth={activeTab === "profile" ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">Perfil</span>
+                        <User size={20} strokeWidth={activeTab === "profile" ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold">Perfil</span>
+                        {activeTab === "profile" && <div className="w-1 h-1 bg-blue-500 rounded-full mt-0.5"></div>}
                     </button>
                 </div>
-                <div className="h-4 w-full bg-white/95"></div>
             </nav>
         </div>
     );

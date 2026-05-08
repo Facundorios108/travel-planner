@@ -2,15 +2,13 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 .dark {
-  --background: #0f172a;
-  /* slate-900 */
-  --foreground: #f8fafc;
-  /* slate-50 */
+  --background: #020617;
+  --foreground: #f1f5f9;
 }
 
 @theme inline {
@@ -18,13 +16,45 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  /* Soften dark mode colors to address "pure black" sensation */
-  --color-slate-950: #0f172a;
-  --color-slate-900: #1e293b;
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+}
+
+@layer base {
+  * {
+    @apply border-slate-200 dark:border-slate-800 transition-colors duration-200;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 shadow-xl;
+  }
+  
+  .glass-dark {
+    @apply bg-slate-900/80 backdrop-blur-2xl border border-white/5 shadow-2xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-blue-500 to-indigo-600;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Page Transitions placeholder */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
 }

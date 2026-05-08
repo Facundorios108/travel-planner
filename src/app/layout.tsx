@@ -9,13 +9,22 @@ import { Viewport } from 'next';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Planificador de Viajes",
-  description: "Organiza tus aventuras paso a paso, PWA",
+  title: "StayFinder - Tu Planificador de Viajes con IA",
+  description: "Diseña itinerarios inteligentes, gestiona tus documentos y controla tus gastos de viaje en un solo lugar.",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "StayFinder",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#3b82f6",
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

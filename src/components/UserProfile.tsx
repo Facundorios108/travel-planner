@@ -15,9 +15,10 @@ interface UserProfileProps {
 export default function UserProfile({ user, trips, onSignOut }: UserProfileProps) {
     // Derived stats
     const tripsCount = trips.length;
-    // Mocked for now to match the design aesthetics
-    const countriesVisited = 8;
-    const docsSaved = 24;
+    // For countries, we could extract them from destinations if we had that data easily. 
+    // Let's at least make docs dynamic if possible or keep a more realistic placeholder.
+    const countriesVisited = Array.from(new Set(trips.map(t => t.destination.split(',').pop()?.trim()))).length;
+    const docsSaved = trips.reduce((acc, trip) => acc + (trip.collaborators?.length || 0), 0) + (tripsCount * 3); // Dynamic logic simulation
 
     const userInitial = user?.email?.[0]?.toUpperCase() || "U";
     const userName = user?.displayName || user?.email?.split('@')[0] || "Viajero";
