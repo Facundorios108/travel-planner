@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, FileText, Ticket, Bed, IdCard, Train, Car, Link as LinkIcon, Upload } from "lucide-react";
 import { DocumentType } from "@/types/travel";
+import { saveDocumentToCache } from "@/utils/documentCache";
 
 interface AddDocumentModalProps {
     isOpen: boolean;
@@ -37,6 +38,7 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
             onClose();
         } catch (error) {
             console.error("Error saving document:", error);
+            alert("No se pudo guardar el documento. Verifica el tamaño o tu conexión.");
         } finally {
             setIsSaving(false);
         }
@@ -134,33 +136,28 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
                             {/* Option 1: File Upload */}
                             <label className="flex items-center justify-center gap-2 w-full bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium py-3 rounded-xl cursor-pointer transition-colors">
                                 <Upload size={18} />
-                                Subir imagen desde el dispositivo
+                                Subir archivo (Imagen o PDF)
                                 <input
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,application/pdf"
                                     className="hidden"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
 
+                                        // Validar tamaño máximo (ej. 5MB)
+                                        if (file.size > 5 * 1024 * 1024) {
+                                            alert("El archivo es demasiado grande. Máximo 5MB.");
+                                            return;
+                                        }
+
                                         const reader = new FileReader();
-                                        reader.onload = (event) => {
-                                            const img = new Image();
-                                            img.onload = () => {
-                                                const canvas = document.createElement("canvas");
-                                                const MAX_WIDTH = 1200;
-                                                let scaleSize = 1;
-                                                if (img.width > MAX_WIDTH) {
-                                                    scaleSize = MAX_WIDTH / img.width;
-                                                }
-                                                canvas.width = img.width * scaleSize;
-                                                canvas.height = img.height * scaleSize;
-                                                const ctx = canvas.getContext("2d");
-                                                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                                const base64String = canvas.toDataURL("image/jpeg", 0.7);
-                                                setUrl(base64String);
-                                            };
-                                            img.src = event.target?.result as string;
+                                        reader.onload = async (event) => {
+                                            const base64String = event.target?.result as string;
+                                            // Guardar el string en IndexedDB
+                                            const fileId = `localcache_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                                            await saveDocumentToCache(fileId, base64String);
+                                            setUrl(fileId);
                                         };
                                         reader.readAsDataURL(file);
                                     }}
@@ -174,24 +171,24 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
                                 </div>
                                 <input
                                     type="text"
-                                    value={url.startsWith('data:image') ? 'Imagen adjuntada correctamente' : url}
+                                    value={url.startsWith('localcache_') || url.startsWith('data:') ? 'Archivo adjuntado correctamente (Caché local)' : url}
                                     onChange={(e) => {
-                                        if (!url.startsWith('data:image')) {
+                                        if (!url.startsWith('localcache_') && !url.startsWith('data:')) {
                                             setUrl(e.target.value);
                                         }
                                     }}
-                                    readOnly={url.startsWith('data:image')}
+                                    readOnly={url.startsWith('localcache_') || url.startsWith('data:')}
                                     placeholder="O pega un enlace (ej. Google Drive)"
-                                    className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 ${url.startsWith('data:image') ? 'text-green-600 dark:text-green-400 font-medium italic pointer-events-none' : ''}`}
+                                    className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 ${url.startsWith('localcache_') || url.startsWith('data:') ? 'text-green-600 dark:text-green-400 font-medium italic pointer-events-none text-sm' : ''}`}
                                 />
                             </div>
-                            {url.startsWith("data:image") && (
+                            {(url.startsWith("localcache_") || url.startsWith("data:")) && (
                                 <button
                                     type="button"
                                     onClick={() => setUrl("")}
                                     className="text-xs text-red-500 hover:text-red-700 font-bold"
                                 >
-                                    Eliminar imagen adjunta
+                                    Eliminar archivo adjunto
                                 </button>
                             )}
                         </div>

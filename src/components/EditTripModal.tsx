@@ -53,8 +53,8 @@ export function EditTripModal({ isOpen, onClose, onSave, trip }: EditTripModalPr
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[90vh]">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                         Editar Detalles del Viaje
                     </h2>
@@ -63,7 +63,7 @@ export function EditTripModal({ isOpen, onClose, onSave, trip }: EditTripModalPr
                     </button>
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1">
                     {error && (
                         <div className="mb-4 text-sm text-red-500 bg-red-50 dark:bg-red-500/10 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
                             {error}
@@ -118,7 +118,7 @@ export function EditTripModal({ isOpen, onClose, onSave, trip }: EditTripModalPr
                     </form>
                 </div>
 
-                <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
+                <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}

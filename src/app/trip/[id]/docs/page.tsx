@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { travelService } from "@/lib/services";
 import { Trip, TripDocument, DocumentType } from "@/types/travel";
 import TripBottomNav from "@/components/TripBottomNav";
-import { ArrowLeft, Search, Ticket, Bed, IdCard, Train, Car, ChevronRight, Plus, FileText, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, Ticket, Bed, IdCard, Train, Car, ChevronRight, Plus, FileText, Trash2, Loader2, X } from "lucide-react";
 import { AddDocumentModal } from "@/components/AddDocumentModal";
+import { getDocumentFromCache, deleteDocumentFromCache } from "@/utils/documentCache";
 
 export default function DocumentsPage() {
     const params = useParams();
@@ -16,9 +17,10 @@ export default function DocumentsPage() {
     const [trip, setTrip] = useState<Trip | null>(null);
     const [documents, setDocuments] = useState<TripDocument[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState('All');
+    const [activeFilter, setActiveFilter] = useState('Todos');
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     useEffect(() => {
         const loadDocs = async () => {
@@ -38,7 +40,7 @@ export default function DocumentsPage() {
         loadDocs();
     }, [tripId]);
 
-    const filters = ['All', 'Passports', 'Tickets', 'Bookings'];
+    const filters = ['Todos', 'Ticket', 'Hotel', 'ID/Pasaporte', 'Tren/Bus', 'Auto', 'Otro'];
 
     const getIconForType = (type: DocumentType) => {
         switch (type) {
@@ -51,11 +53,54 @@ export default function DocumentsPage() {
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const handleDelete = async (e: React.MouseEvent, docItem: TripDocument) => {
         e.stopPropagation();
         if (confirm("¿Eliminar este documento?")) {
-            await travelService.deleteDocument(id);
-            setDocuments(documents.filter(d => d.id !== id));
+            try {
+                await travelService.deleteDocument(docItem.id!);
+                if (docItem.url?.startsWith("localcache_")) {
+                    await deleteDocumentFromCache(docItem.url);
+                }
+                setDocuments(documents.filter(d => d.id !== docItem.id));
+            } catch (err) {
+                console.error("Error deleting doc", err);
+            }
+        }
+    };
+
+    const handleOpenDocument = async (url: string) => {
+        try {
+            let finalUrl = url;
+            if (url.startsWith("localcache_")) {
+                const cachedData = await getDocumentFromCache(url);
+                if (cachedData) {
+                    finalUrl = cachedData;
+                } else {
+                    alert("El archivo no se encuentra en el caché local de este dispositivo.");
+                    return;
+                }
+            }
+
+            if (finalUrl.startsWith("data:image")) {
+                setSelectedImage(finalUrl);
+            } else if (finalUrl.startsWith("data:application/pdf")) {
+                const arr = finalUrl.split(',');
+                const mime = arr[0].match(/:(.*?);/)?.[1] || "application/pdf";
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                const blob = new Blob([u8arr], { type: mime });
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, "_blank");
+            } else {
+                window.open(finalUrl, "_blank");
+            }
+        } catch (error) {
+            console.error("Error opening document", error);
+            alert("Hubo un error al abrir el documento.");
         }
     };
 
@@ -88,9 +133,12 @@ export default function DocumentsPage() {
 
         // Category Match
         let matchesFilter = true;
-        if (activeFilter === 'Passports') matchesFilter = doc.type === 'id';
-        if (activeFilter === 'Tickets') matchesFilter = ['ticket', 'train'].includes(doc.type);
-        if (activeFilter === 'Bookings') matchesFilter = ['hotel', 'car'].includes(doc.type);
+        if (activeFilter === 'Ticket') matchesFilter = doc.type === 'ticket';
+        if (activeFilter === 'Hotel') matchesFilter = doc.type === 'hotel';
+        if (activeFilter === 'ID/Pasaporte') matchesFilter = doc.type === 'id';
+        if (activeFilter === 'Tren/Bus') matchesFilter = doc.type === 'train';
+        if (activeFilter === 'Auto') matchesFilter = doc.type === 'car';
+        if (activeFilter === 'Otro') matchesFilter = doc.type === 'other';
 
         return matchesSearch && matchesFilter;
     });
@@ -132,7 +180,7 @@ export default function DocumentsPage() {
                                 }`}
                         >
                             <span className={`text-sm ${activeFilter === filter ? 'font-bold' : 'font-medium'}`}>
-                                {filter === 'All' ? 'Todos' : filter === 'Passports' ? 'Pasaportes' : filter === 'Tickets' ? 'Tickets' : 'Reservas'}
+                                {filter}
                             </span>
                         </button>
                     ))}
@@ -166,7 +214,11 @@ export default function DocumentsPage() {
                             return (
                                 <div
                                     key={doc.id}
-                                    onClick={() => doc.url && window.open(doc.url, "_blank")}
+                                    onClick={() => {
+                                        if (doc.url) {
+                                            handleOpenDocument(doc.url);
+                                        }
+                                    }}
                                     className="group relative flex items-center gap-4 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-[1.5rem] shadow-sm cursor-pointer hover:shadow-md border border-slate-100 dark:border-slate-800 transition-all overflow-hidden"
                                 >
                                     <div className="flex items-center justify-center rounded-2xl bg-[#1877F2]/10 dark:bg-[#1877F2]/20 text-[#1877F2] shrink-0 w-14 h-14">
@@ -180,7 +232,7 @@ export default function DocumentsPage() {
                                     {/* Action icons stack */}
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                         <button
-                                            onClick={(e) => handleDelete(e, doc.id)}
+                                            onClick={(e) => handleDelete(e, doc)}
                                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors"
                                         >
                                             <Trash2 size={18} />
@@ -199,20 +251,43 @@ export default function DocumentsPage() {
             </main>
 
             {/* Floating Action Button */}
-            <div className="fixed bottom-24 right-6 z-20">
+            {documents.length > 0 && (
+                <div className="fixed bottom-32 right-6 z-20">
                 <button
                     onClick={() => setIsAddModalOpen(true)}
                     className="w-16 h-16 bg-[#1877F2] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(24,119,242,0.4)] hover:shadow-[0_12px_20px_rgba(24,119,242,0.5)] border border-blue-400 group"
                 >
                     <Plus size={32} strokeWidth={2.5} className="transition-transform duration-300 group-hover:rotate-90" />
                 </button>
-            </div>
+                </div>
+            )}
 
             <AddDocumentModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 onSave={handleSaveDoc}
             />
+
+            {/* Document Image Viewer Modal */}
+            {selectedImage && (
+                <div 
+                    className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" 
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button
+                        onClick={() => setSelectedImage(null)}
+                        className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                    <img 
+                        src={selectedImage} 
+                        alt="Documento" 
+                        className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" 
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
 
             <TripBottomNav tripId={tripId} />
         </div>

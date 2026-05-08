@@ -120,29 +120,25 @@ export default function AITripPlanner() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-xs font-bold uppercase tracking-wider mb-2">
-          <Wand2 size={12} />
-          StayFinder AI
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="text-center space-y-2 mb-10">
         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-          Tu próximo viaje, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-600">diseñado por IA</span>
+          Planner con <span className="text-blue-500">IA</span>
         </h2>
         <p className="text-slate-500 dark:text-slate-400 max-w-xs mx-auto text-sm">
-          Dime a dónde quieres ir y yo me encargo del resto.
+          Dime a dónde quieres ir y yo armaré tu viaje ideal.
         </p>
       </div>
 
       {!result ? (
-        <form onSubmit={handleGenerate} className="glass p-6 rounded-[32px] border border-white/20 shadow-xl space-y-6">
-          <div className="space-y-4">
-            <div className="relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <form onSubmit={handleGenerate} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+          <div className="space-y-5">
+            <div className="relative group">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
               <input
                 type="text"
                 placeholder="¿A dónde quieres ir?"
-                className="w-full pl-12 pr-4 py-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 required
@@ -150,40 +146,40 @@ export default function AITripPlanner() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
                   type="date"
-                  className="w-full pl-12 pr-4 py-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-sm"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 dark:text-slate-100 text-sm"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
                   type="date"
-                  className="w-full pl-12 pr-4 py-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-sm"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-900 dark:text-slate-100 text-sm"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="relative">
-              <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <div className="relative group">
+              <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
               <input
                 type="text"
-                placeholder="Presupuesto aproximado (ej: 1500 USD)"
-                className="w-full pl-12 pr-4 py-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
+                placeholder="Presupuesto aprox. (ej: $1500)"
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
               />
             </div>
 
             <textarea
-              placeholder="Preferencias (ej: museos, comida local, evitar caminar mucho...)"
-              className="w-full p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium min-h-[100px]"
+              placeholder="Preferencias (ej. sin museos, mucho caminar...)"
+              className="w-full p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold placeholder:text-slate-400 text-slate-900 dark:text-slate-100 min-h-[100px] resize-none"
               value={preferences}
               onChange={(e) => setPreferences(e.target.value)}
             />
@@ -192,35 +188,32 @@ export default function AITripPlanner() {
           <button
             type="submit"
             disabled={loading || !destination}
-            className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all cursor-pointer"
+            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 transition-all"
           >
             {loading ? (
               <>
-                <Loader2 size={20} className="animate-spin" />
-                <span>Generando Magia...</span>
+                <Loader2 size={18} className="animate-spin" />
+                <span>Generando...</span>
               </>
             ) : (
               <>
-                <Wand2 size={20} />
-                <span>Planear mi Viaje</span>
+                <Wand2 size={18} />
+                <span>Generar Itinerario</span>
               </>
             )}
           </button>
         </form>
       ) : (
-        <div className="space-y-6 pb-24 animate-in fade-in zoom-in-95 duration-500">
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-20">
-              <Wand2 size={120} />
-            </div>
+        <div className="space-y-6 pb-24 animate-in fade-in duration-500">
+          <div className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 p-8 rounded-[2rem] shadow-sm relative overflow-hidden">
             <h3 className="text-2xl font-black mb-2">{result.tripTitle}</h3>
-            <p className="text-blue-100 text-sm leading-relaxed mb-6">{result.description}</p>
+            <p className="text-slate-400 dark:text-slate-600 text-sm leading-relaxed mb-6">{result.description}</p>
             
             <div className="flex gap-2">
                <button 
                  onClick={handleSave}
                  disabled={saving || saved}
-                 className="flex-1 py-3 bg-white text-blue-600 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all disabled:opacity-80"
+                 className="flex-1 py-3 bg-blue-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition-all disabled:opacity-80"
                >
                  {saving ? (
                    <Loader2 size={18} className="animate-spin" />
@@ -233,7 +226,7 @@ export default function AITripPlanner() {
                </button>
                <button 
                  onClick={() => setResult(null)}
-                 className="px-4 py-3 bg-white/10 backdrop-blur-md rounded-2xl text-sm font-bold hover:bg-white/20 transition-all"
+                 className="px-4 py-3 bg-white/10 dark:bg-slate-900/10 backdrop-blur-md rounded-xl text-sm font-bold hover:bg-white/20 dark:hover:bg-slate-900/20 transition-all"
                >
                  Nuevo
                </button>
@@ -243,27 +236,25 @@ export default function AITripPlanner() {
           <div className="space-y-4">
             <h4 className="text-lg font-bold px-2 text-slate-800 dark:text-slate-200">Itinerario Paso a Paso</h4>
             {result.itinerary.map((day) => (
-              <div key={day.day} className="glass p-6 rounded-[32px] border border-white/20 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold text-sm">
-                      {day.day}
-                    </div>
-                    <h5 className="font-bold text-slate-900 dark:text-slate-100">{day.title}</h5>
+              <div key={day.day} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 flex items-center justify-center font-bold text-sm">
+                    {day.day}
                   </div>
+                  <h5 className="font-bold text-slate-900 dark:text-slate-100">{day.title}</h5>
                 </div>
 
-                <div className="space-y-4 pl-1">
+                <div className="space-y-4 pl-3">
                   {day.activities.map((act, i) => (
-                    <div key={i} className="relative pl-6 border-l-2 border-blue-500/20 last:border-0 pb-2">
-                      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900"></div>
-                      <div className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-0.5">{act.time}</div>
+                    <div key={i} className="relative pl-5 border-l-2 border-slate-100 dark:border-slate-800 last:border-0 pb-2">
+                      <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{act.time}</div>
                       <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{act.activity}</div>
                       <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
                         <MapPin size={12} />
                         <span>{act.location}</span>
                         {act.estimatedCost && (
-                          <span className="ml-2 font-medium text-green-600 dark:text-green-400">• {act.estimatedCost}</span>
+                          <span className="ml-2 font-medium text-slate-400">• {act.estimatedCost}</span>
                         )}
                       </div>
                     </div>
@@ -273,14 +264,14 @@ export default function AITripPlanner() {
             ))}
           </div>
 
-          <div className="glass p-6 rounded-[32px] border border-white/20 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
              <h4 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-               <Wallet size={18} className="text-blue-500" />
+               <Wallet size={18} className="text-slate-400" />
                Desglose de Presupuesto
              </h4>
              <div className="grid grid-cols-2 gap-3">
                {Object.entries(result.budgetBreakdown).map(([key, val]) => (
-                 <div key={key} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
+                 <div key={key} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
                    <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">{key === 'accommodation' ? 'Alojamiento' : key === 'food' ? 'Comida' : key === 'activities' ? 'Actividades' : 'Total'}</div>
                    <div className="font-bold text-slate-900 dark:text-slate-100">{val}</div>
                  </div>
@@ -288,15 +279,15 @@ export default function AITripPlanner() {
              </div>
           </div>
 
-          <div className="glass p-6 rounded-[32px] border border-white/20 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
              <h4 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-               <Wand2 size={18} className="text-yellow-500" />
+               <Wand2 size={18} className="text-slate-400" />
                Consejos de la IA
              </h4>
              <ul className="space-y-2">
                {result.tips.map((tip, i) => (
                  <li key={i} className="flex gap-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                   <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></div>
+                   <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0"></div>
                    {tip}
                  </li>
                ))}

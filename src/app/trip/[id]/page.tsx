@@ -496,7 +496,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             {/* FAB global para ambas vistas */}
             <button
                 onClick={openNewModal}
-                className="fixed bottom-24 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 z-40 group">
+                className="fixed bottom-32 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 z-40 group">
                 <Plus size={28} className="transition-transform group-hover:rotate-90" />
             </button>
 
@@ -508,6 +508,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 destinations={destinations}
                 tripId={tripId}
                 existingActivity={editingActivity}
+                defaultDate={(view === "calendar" && selectedCalendarDate) ? new Date(selectedCalendarDate + "T12:00:00") : trip?.startDate}
             />
 
             {/* Add Destination Modal */}

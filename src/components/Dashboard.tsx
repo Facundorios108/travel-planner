@@ -52,8 +52,27 @@ export default function Dashboard() {
             if (tabUrl === "profile" || tabUrl === "docs" || tabUrl === "home" || tabUrl === "ai") {
                 setActiveTab(tabUrl as any);
             }
+            
+            const handlePopState = () => {
+                const currentParams = new URLSearchParams(window.location.search);
+                const currentTab = currentParams.get("tab");
+                if (currentTab === "profile" || currentTab === "docs" || currentTab === "home" || currentTab === "ai") {
+                    setActiveTab(currentTab as any);
+                } else {
+                    setActiveTab("home");
+                }
+            };
+            
+            window.addEventListener("popstate", handlePopState);
+            return () => window.removeEventListener("popstate", handlePopState);
         }
     }, []);
+
+    const handleTabChange = (tab: "home" | "ai" | "docs" | "profile") => {
+        setActiveTab(tab);
+        const newUrl = tab === "home" ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    };
 
     // Error UI para íncides de Firebase
     if (indexErrorLink) {
@@ -133,7 +152,7 @@ export default function Dashboard() {
                         {activeTab === "home" && (
                             <button
                                 onClick={() => setIsAddingTrip(true)}
-                                className="fixed bottom-24 right-4 sm:right-auto sm:ml-[350px] w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 z-40 group"
+                                className="fixed bottom-28 right-4 sm:right-auto sm:ml-[350px] w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 z-40 group"
                             >
                                 <Plus size={28} className="transition-transform group-hover:rotate-90" />
                             </button>
@@ -183,7 +202,7 @@ export default function Dashboard() {
             <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-[400px] z-50 glass rounded-3xl border border-white/20 dark:border-slate-800/50 shadow-2xl overflow-hidden">
                 <div className="flex justify-around items-center px-1 py-3">
                     <button
-                        onClick={() => setActiveTab("home")}
+                        onClick={() => handleTabChange("home")}
                         className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "home" ? "text-blue-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
                         <CalendarDays size={20} strokeWidth={activeTab === "home" ? 2.5 : 2} />
@@ -192,7 +211,7 @@ export default function Dashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab("ai")}
+                        onClick={() => handleTabChange("ai")}
                         className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "ai" ? "text-indigo-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
                         <Wand2 size={20} strokeWidth={activeTab === "ai" ? 2.5 : 2} />
@@ -201,7 +220,7 @@ export default function Dashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab("docs")}
+                        onClick={() => handleTabChange("docs")}
                         className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "docs" ? "text-blue-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
                         <Wallet size={20} strokeWidth={activeTab === "docs" ? 2.5 : 2} />
@@ -210,7 +229,7 @@ export default function Dashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab("profile")}
+                        onClick={() => handleTabChange("profile")}
                         className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "profile" ? "text-blue-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
                         <User size={20} strokeWidth={activeTab === "profile" ? 2.5 : 2} />

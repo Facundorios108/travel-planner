@@ -25,16 +25,7 @@ function StartDateDisplay({ startDate }: { startDate: Date | undefined }) {
         } else if (differenceInDays(start, now) === 0 && start.getDate() === now.getDate()) {
             setStatusText("¡Inicia hoy!");
         } else {
-            const monthsLeft = differenceInMonths(start, now);
-            if (monthsLeft > 0) {
-                setStatusText(`Faltan ${monthsLeft} ${monthsLeft === 1 ? 'mes' : 'meses'}`);
-                return;
-            }
-            const weeksLeft = differenceInWeeks(start, now);
-            if (weeksLeft > 0) {
-                setStatusText(`Faltan ${weeksLeft} ${weeksLeft === 1 ? 'semana' : 'semanas'}`);
-                return;
-            }
+            // Refactored to just show days instead of months for a true "countdown" feel
             const daysLeft = differenceInDays(start, now);
             if (daysLeft > 0) {
                 setStatusText(`Faltan ${daysLeft} ${daysLeft === 1 ? 'día' : 'días'}`);
@@ -51,7 +42,7 @@ function StartDateDisplay({ startDate }: { startDate: Date | undefined }) {
     }, [startDate]);
 
     return (
-        <span className="text-sm font-medium" suppressHydrationWarning>
+        <span className="text-sm font-bold text-blue-500" suppressHydrationWarning>
             {statusText}
         </span>
     );

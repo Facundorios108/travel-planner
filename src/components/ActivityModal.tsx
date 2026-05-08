@@ -10,6 +10,7 @@ interface ActivityModalProps {
     destinations: Destination[];
     tripId: string;
     existingActivity?: Activity | null;
+    defaultDate?: Date | null;
 }
 
 const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: React.ReactNode }[] = [
@@ -20,7 +21,7 @@ const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: React.ReactNode
     { type: "other", label: "Otro", icon: <MoreHorizontal size={16} /> },
 ];
 
-export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, existingActivity }: ActivityModalProps) {
+export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, existingActivity, defaultDate }: ActivityModalProps) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [type, setType] = useState<ActivityType>("activity");
@@ -44,10 +45,14 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
             setDescription("");
             setType("activity");
             setDestinationId(destinations.length > 0 ? destinations[0].id : "");
-            setStartDate("");
+            if (defaultDate) {
+                setStartDate(format(defaultDate, "yyyy-MM-dd'T'12:00"));
+            } else {
+                setStartDate("");
+            }
             setEndDate("");
         }
-    }, [existingActivity, destinations, isOpen]);
+    }, [existingActivity, destinations, isOpen, defaultDate]);
 
     if (!isOpen) return null;
 
