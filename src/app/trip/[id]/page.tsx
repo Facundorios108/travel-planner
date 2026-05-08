@@ -76,7 +76,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
         );
     }
 
-    const getActivityIcon = (type: ActivityType) => {
+    const getActivityIcon = (type?: ActivityType | string) => {
         switch (type) {
             case "flight": return <PlaneLanding size={20} />;
             case "transfer": return <Car size={20} />;

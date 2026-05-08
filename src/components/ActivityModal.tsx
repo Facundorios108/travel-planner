@@ -34,8 +34,8 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
         if (existingActivity) {
             setTitle(existingActivity.title);
             setDescription(existingActivity.description || "");
-            setType(existingActivity.type);
-            setDestinationId(existingActivity.destinationId);
+            setType(existingActivity.type || "activity");
+            setDestinationId(existingActivity.destinationId || (destinations.length > 0 ? destinations[0].id : ""));
             // Format datetime-local requires YYYY-MM-DDThh:mm format
             setStartDate(format(existingActivity.startDate, "yyyy-MM-dd'T'HH:mm"));
             setEndDate(existingActivity.endDate ? format(existingActivity.endDate, "yyyy-MM-dd'T'HH:mm") : "");

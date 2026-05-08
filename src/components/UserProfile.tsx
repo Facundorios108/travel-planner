@@ -17,7 +17,7 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
     const tripsCount = trips.length;
     // For countries, we could extract them from destinations if we had that data easily. 
     // Let's at least make docs dynamic if possible or keep a more realistic placeholder.
-    const countriesVisited = Array.from(new Set(trips.map(t => t.destination.split(',').pop()?.trim()))).length;
+    const countriesVisited = Array.from(new Set(trips.map(t => t.destination?.split(',').pop()?.trim()).filter(Boolean))).length;
     const docsSaved = trips.reduce((acc, trip) => acc + (trip.collaborators?.length || 0), 0) + (tripsCount * 3); // Dynamic logic simulation
 
     const userInitial = user?.email?.[0]?.toUpperCase() || "U";

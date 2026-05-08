@@ -7,6 +7,8 @@ export interface Trip {
     endDate?: Date;
     coverImage?: string;
     collaborators?: string[]; // Array of user IDs who can access this trip
+    description?: string;
+    destination?: string;
 }
 
 export interface UserSettings {
@@ -31,10 +33,13 @@ export type ActivityType = "flight" | "transfer" | "activity" | "carRental" | "o
 export interface Activity {
     id: string;
     tripId: string;
-    destinationId: string;
-    type: ActivityType;
+    destinationId?: string;
+    type?: ActivityType;
     title: string;
     description?: string;
+    location?: string;
+    category?: string;
+    notes?: string;
     startDate: Date;
     endDate?: Date;
 }

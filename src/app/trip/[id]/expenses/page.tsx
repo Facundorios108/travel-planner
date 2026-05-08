@@ -247,7 +247,7 @@ export default function ExpensesPage() {
                                                 color: '#1e293b'
                                             }}
                                             itemStyle={{ color: '#1e293b' }}
-                                            formatter={(value: number) => [formatMoney(value), "Monto"]}
+                                            formatter={(value: any) => [formatMoney(Number(value) || 0), "Monto"]}
                                         />
                                         <Legend 
                                             verticalAlign="bottom" 
@@ -292,7 +292,7 @@ export default function ExpensesPage() {
                                                 color: '#1e293b'
                                             }}
                                             itemStyle={{ color: '#1e293b' }}
-                                            formatter={(value: number) => [formatMoney(value), "Monto"]}
+                                            formatter={(value: any) => [formatMoney(Number(value) || 0), "Monto"]}
                                         />
                                         <Bar 
                                             dataKey="amount" 
