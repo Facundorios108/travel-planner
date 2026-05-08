@@ -13,8 +13,13 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Check if we have at least the API Key before initializing
+const isFirebaseConfigured = !!firebaseConfig.apiKey;
+
 // Initialize Firebase only once
-const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app: FirebaseApp = getApps().length === 0 
+    ? initializeApp(isFirebaseConfigured ? firebaseConfig : { apiKey: "dummy-key-for-build" }) 
+    : getApps()[0];
 
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
