@@ -85,7 +85,7 @@ export function EditTripModal({ isOpen, onClose, onSave, trip }: EditTripModalPr
                         </div>
 
                         {/* Dates */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha de Inicio <span className="text-slate-400 font-normal">(Opc.)</span></label>
                                 <div className="relative">

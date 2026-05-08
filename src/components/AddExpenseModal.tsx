@@ -68,7 +68,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Title & Amount inline */}
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
                             <div className="flex-[2]">
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                                     Título
@@ -77,7 +77,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                                     type="text"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full text-slate-900 bg-white border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                                     placeholder="Ej. Cena restaurante"
                                 />
                             </div>
@@ -90,7 +90,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                                     step="0.01"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full text-slate-900 bg-white border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-medium"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-medium"
                                     placeholder="0.00"
                                 />
                             </div>
@@ -107,7 +107,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                                 onChange={(e) => {
                                     if (e.target.value) setDate(new Date(e.target.value));
                                 }}
-                                className="w-full text-slate-900 bg-white border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                             />
                         </div>
 

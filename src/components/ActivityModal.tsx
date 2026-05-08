@@ -86,12 +86,12 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-            <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                         {existingActivity ? "Editar Actividad" : "Nueva Actividad"}
                     </h2>
-                    <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-50">
+                    <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
                         <X size={20} />
                     </button>
                 </div>
@@ -106,7 +106,7 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                     <form id="activity-form" onSubmit={handleSubmit} className="space-y-6">
                         {/* Type Selection (Chips) */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Tipo de Actividad</label>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Tipo de Actividad</label>
                             <div className="flex flex-wrap gap-2">
                                 {ACTIVITY_TYPES.map((actType) => (
                                     <button
@@ -114,8 +114,8 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                                         type="button"
                                         onClick={() => setType(actType.type)}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition ${type === actType.type
-                                                ? "bg-blue-500 text-white shadow-sm ring-2 ring-blue-500 ring-offset-2"
-                                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                ? "bg-blue-500 text-white shadow-sm ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900"
+                                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                                             }`}
                                     >
                                         {actType.icon}
@@ -127,24 +127,24 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
 
                         {/* Title */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Título</label>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Título</label>
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Ej: Vuelo Madrid-Paris, Tour Coliseo..."
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition"
                                 required
                             />
                         </div>
 
                         {/* Destination */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Destino</label>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Destino</label>
                             <select
                                 value={destinationId}
                                 onChange={(e) => setDestinationId(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition appearance-none"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition appearance-none"
                                 required
                             >
                                 <option value="" disabled>Selecciona un destino</option>
@@ -155,46 +155,46 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                         </div>
 
                         {/* Dates */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Fecha/Hora Inicio</label>
+                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha/Hora Inicio</label>
                                 <input
                                     type="datetime-local"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Fecha/Hora Fin <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha/Hora Fin <span className="text-slate-400 font-normal">(Opcional)</span></label>
                                 <input
                                     type="datetime-local"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition"
                                 />
                             </div>
                         </div>
 
                         {/* Description */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Descripción</label>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Descripción</label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Detalles de reserva, notas, etc."
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition resize-none min-h-[100px]"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition resize-none min-h-[100px]"
                             />
                         </div>
                     </form>
                 </div>
 
-                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 rounded-xl transition"
+                        className="px-6 py-3 font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl transition"
                     >
                         Cancelar
                     </button>

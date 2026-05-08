@@ -127,7 +127,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col max-w-[480px] mx-auto overflow-hidden bg-slate-50">
+        <div className="relative flex min-h-screen w-full flex-col max-w-[480px] mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
             {/* Custom Styles for Timeline Line */}
             <style jsx>{`
                 .itinerary-line {
@@ -138,14 +138,17 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                     width: 2px;
                     background: repeating-linear-gradient(to bottom, #cbd5e1 0%, #cbd5e1 4px, transparent 4px, transparent 8px);
                 }
+                :global(.dark) .itinerary-line {
+                    background: repeating-linear-gradient(to bottom, #334155 0%, #334155 4px, transparent 4px, transparent 8px);
+                }
             `}</style>
 
             {/* Header */}
-            <header className="flex items-center justify-between p-4 pt-6 bg-slate-50 z-10">
-                <button onClick={onBack} className="flex items-center justify-center h-10 w-10 rounded-full bg-slate-200/50 text-slate-900 transition hover:bg-slate-300">
+            <header className="flex items-center justify-between p-4 pt-6 bg-slate-50 dark:bg-slate-950 z-10 transition-colors">
+                <button onClick={onBack} className="flex items-center justify-center h-10 w-10 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 transition hover:bg-slate-300 dark:hover:bg-slate-700">
                     <ArrowLeft size={20} />
                 </button>
-                <h1 className="text-lg font-bold tracking-tight text-slate-900">Nuevo Viaje Multi-Destino</h1>
+                <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Nuevo Viaje Multi-Destino</h1>
                 <div className="w-10"></div>
             </header>
 
@@ -154,7 +157,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                 <form id="add-trip-form" onSubmit={handleSubmit} className="space-y-8">
                     {/* Trip Name */}
                     <div className="space-y-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
                             Nombre del Viaje
                         </label>
                         <div className="relative group">
@@ -164,7 +167,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                 value={tripName}
                                 onChange={(e) => setTripName(e.target.value)}
                                 placeholder="Ej: Eurotrip 2024"
-                                className="w-full h-14 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base font-medium outline-none"
+                                className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base font-medium outline-none text-slate-900 dark:text-slate-100"
                             />
                         </div>
                     </div>
@@ -172,10 +175,10 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                     {/* Itinerary Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between ml-1">
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 Itinerario
                             </label>
-                            <span className="text-xs font-medium text-slate-400">{calculateTotalDays()} Días en Total</span>
+                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{calculateTotalDays()} Días en Total</span>
                         </div>
 
                         <div className="space-y-0 relative">
@@ -206,7 +209,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                             <div className="flex flex-col flex-1 pb-4">
                                                 <div className="flex flex-1 items-start justify-between">
                                                     <div className="flex flex-col flex-1 pr-2">
-                                                        <span className="text-xs text-slate-500 font-medium mb-1">
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">
                                                             {isFirst ? "Punto de inicio" : (isLast ? "Destino final" : "Siguiente parada")}
                                                         </span>
                                                         <div className="w-full">
@@ -218,9 +221,9 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-2 mt-4">
-                                                        <div className="flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full whitespace-nowrap">
-                                                            <span className="text-xs font-bold">{diffDays}</span>
-                                                            <span className="text-[10px] text-slate-500 uppercase font-bold">días</span>
+                                                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full whitespace-nowrap">
+                                                            <span className="text-xs font-bold dark:text-slate-200">{diffDays}</span>
+                                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">días</span>
                                                         </div>
                                                         {destinations.length > 1 && (
                                                             <button
@@ -235,26 +238,26 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                                 </div>
 
                                                 {/* Date Inputs */}
-                                                <div className="flex gap-3 mt-3 w-full max-w-[280px]">
-                                                    <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200">
-                                                        <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">C/IN</label>
+                                                <div className="flex flex-col sm:flex-row gap-3 mt-3 w-full max-w-[280px]">
+                                                    <div className="flex-1 bg-white dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-800">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block mb-1">C/IN</label>
                                                         <input
                                                             type="date"
                                                             required
                                                             value={dest.startDate}
                                                             onChange={(e) => updateDestination(dest.id, "startDate", e.target.value)}
-                                                            className="w-full bg-transparent outline-none text-slate-700 text-sm font-medium"
+                                                            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-300 text-sm font-medium"
                                                         />
                                                     </div>
-                                                    <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200">
-                                                        <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">C/OUT</label>
+                                                    <div className="flex-1 bg-white dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-800">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block mb-1">C/OUT</label>
                                                         <input
                                                             type="date"
                                                             required
                                                             value={dest.endDate}
                                                             min={dest.startDate}
                                                             onChange={(e) => updateDestination(dest.id, "endDate", e.target.value)}
-                                                            className="w-full bg-transparent outline-none text-slate-700 text-sm font-medium"
+                                                            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-300 text-sm font-medium"
                                                         />
                                                     </div>
                                                 </div>
@@ -278,13 +281,13 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
 
                     {/* Temporary Map Visualizer Placeholder */}
                     <div className="pt-4">
-                        <div className="w-full aspect-[21/9] rounded-2xl bg-slate-100 overflow-hidden relative border border-slate-200/50">
-                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center opacity-60 grayscale" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-slate-50 to-transparent"></div>
+                        <div className="w-full aspect-[21/9] rounded-2xl bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-200/50 dark:border-slate-800/50">
+                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center opacity-60 grayscale dark:opacity-30" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent"></div>
                             <div className="absolute bottom-4 left-4">
                                 <div className="flex items-center gap-2">
                                     <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Planeando ruta...</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Planeando ruta...</span>
                                 </div>
                             </div>
                         </div>
@@ -293,7 +296,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
             </main>
 
             {/* Fixed Bottom Footer */}
-            <footer className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent z-20">
+            <footer className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-slate-50 via-slate-50/95 dark:from-slate-950 dark:via-slate-950/95 to-transparent z-20">
                 <button
                     form="add-trip-form"
                     type="submit"

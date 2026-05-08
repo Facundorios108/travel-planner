@@ -64,12 +64,12 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-            <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                         Añadir Nuevo Destino
                     </h2>
-                    <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-50">
+                    <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
                         <X size={20} />
                     </button>
                 </div>
@@ -84,7 +84,7 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
                     <form id="add-destination-form" onSubmit={handleSubmit} className="space-y-6">
                         {/* Location Search */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Destino</label>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Destino</label>
                             <LocationSearch
                                 placeholder="Ciudad, país..."
                                 value={city ? `${city}, ${country}` : ""}
@@ -96,35 +96,35 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
                         </div>
 
                         {/* Dates */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Fecha Inicio</label>
+                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha Inicio</label>
                                 <input
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition relative hover:border-blue-200"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition relative hover:border-blue-200 dark:hover:border-slate-700"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Fecha Fin <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha Fin <span className="text-slate-400 font-normal">(Opcional)</span></label>
                                 <input
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition relative hover:border-blue-200"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition relative hover:border-blue-200 dark:hover:border-slate-700"
                                 />
                             </div>
                         </div>
                     </form>
                 </div>
 
-                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 rounded-xl transition"
+                        className="px-6 py-3 font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl transition"
                     >
                         Cancelar
                     </button>

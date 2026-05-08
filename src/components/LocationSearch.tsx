@@ -101,7 +101,7 @@ export default function LocationSearch({ placeholder, value, onSelect }: Locatio
                     if (results.length > 0) setIsOpen(true);
                 }}
                 placeholder={placeholder}
-                className="w-full px-4 py-3 bg-slate-50 text-slate-900 font-medium rounded-xl outline-none border border-transparent focus:border-slate-200"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium rounded-xl outline-none border border-transparent focus:border-slate-200 dark:focus:border-slate-700 transition-colors"
             />
             {loading && (
                 <div className="absolute right-3 top-3.5 text-slate-400">
@@ -111,20 +111,20 @@ export default function LocationSearch({ placeholder, value, onSelect }: Locatio
 
             {/* Dropdown de resultados */}
             {isOpen && results.length > 0 && (
-                <div className="absolute left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-100 z-50 max-h-60 overflow-y-auto">
+                <div className="absolute left-0 w-full mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 z-50 max-h-60 overflow-y-auto">
                     {results.map((result) => (
                         <button
                             key={result.place_id}
                             type="button"
                             onClick={() => handleSelect(result)}
-                            className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-start gap-3 transition-colors border-b last:border-0 border-slate-100"
+                            className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-start gap-3 transition-colors border-b last:border-0 border-slate-100 dark:border-slate-800"
                         >
-                            <MapPin className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+                            <MapPin className="w-5 h-5 text-slate-400 dark:text-slate-500 mt-0.5 shrink-0" />
                             <div>
-                                <p className="text-sm font-medium text-slate-800 line-clamp-1">
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-1">
                                     {result.display_name.split(",")[0]}
                                 </p>
-                                <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                                     {result.display_name}
                                 </p>
                             </div>
