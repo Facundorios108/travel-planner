@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
 import { Trip } from "@/types/travel";
@@ -20,7 +20,7 @@ export default function Dashboard() {
     const [isAddingTrip, setIsAddingTrip] = useState(false);
     const [indexErrorLink, setIndexErrorLink] = useState<string | null>(null);
 
-    const fetchTrips = async () => {
+    const fetchTrips = useCallback(async () => {
         if (!user) return;
         setLoading(true);
         setIndexErrorLink(null);
@@ -38,11 +38,11 @@ export default function Dashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         fetchTrips();
-    }, [user]);
+    }, [fetchTrips]);
 
     // Handle deep links from TripBottomNav (e.g., coming back from /trip/[id]/docs)
     useEffect(() => {
@@ -68,11 +68,16 @@ export default function Dashboard() {
         }
     }, []);
 
-    const handleTabChange = (tab: "home" | "ai" | "docs" | "profile") => {
+    const handleTabChange = useCallback((tab: "home" | "ai" | "docs" | "profile") => {
         setActiveTab(tab);
         const newUrl = tab === "home" ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
         window.history.pushState({ path: newUrl }, '', newUrl);
-    };
+    }, []);
+
+    const handleTripCreated = useCallback(() => {
+        setIsAddingTrip(false);
+        fetchTrips();
+    }, [fetchTrips]);
 
     // Error UI para íncides de Firebase
     if (indexErrorLink) {
@@ -101,10 +106,7 @@ export default function Dashboard() {
         return (
             <AddTrip
                 onBack={() => setIsAddingTrip(false)}
-                onTripCreated={() => {
-                    setIsAddingTrip(false);
-                    fetchTrips();
-                }}
+                onTripCreated={handleTripCreated}
             />
         );
     }

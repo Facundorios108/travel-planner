@@ -120,25 +120,28 @@ export default function AITripPlanner() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="text-center space-y-2 mb-10">
+    <div className="space-y-8 animate-in fade-in duration-700 px-2">
+      <div className="text-center space-y-3 mb-10">
+        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
+          <Wand2 size={28} className="text-white" />
+        </div>
         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-          Planner con <span className="text-blue-500">IA</span>
+          Planner con <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-600">IA</span>
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 max-w-xs mx-auto text-sm">
-          Dime a dónde quieres ir y yo armaré tu viaje ideal.
+        <p className="text-slate-500 dark:text-slate-400 max-w-xs mx-auto text-sm leading-relaxed">
+          Dime a dónde quieres ir y yo armaré tu viaje ideal con inteligencia artificial.
         </p>
       </div>
 
       {!result ? (
-        <form onSubmit={handleGenerate} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+        <form onSubmit={handleGenerate} className="bg-white dark:bg-slate-900 backdrop-blur-xl p-7 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none space-y-5">
           <div className="space-y-5">
             <div className="relative group">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" size={20} />
               <input
                 type="text"
                 placeholder="¿A dónde quieres ir?"
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border-2 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 required
@@ -188,48 +191,51 @@ export default function AITripPlanner() {
           <button
             type="submit"
             disabled={loading || !destination}
-            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 transition-all"
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-2 hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/25"
           >
             {loading ? (
               <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Generando...</span>
+                <Loader2 size={20} className="animate-spin" />
+                <span>Generando tu viaje...</span>
               </>
             ) : (
               <>
-                <Wand2 size={18} />
-                <span>Generar Itinerario</span>
+                <Wand2 size={20} />
+                <span>Generar Itinerario con IA</span>
               </>
             )}
           </button>
         </form>
       ) : (
         <div className="space-y-6 pb-24 animate-in fade-in duration-500">
-          <div className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 p-8 rounded-[2rem] shadow-sm relative overflow-hidden">
-            <h3 className="text-2xl font-black mb-2">{result.tripTitle}</h3>
-            <p className="text-slate-400 dark:text-slate-600 text-sm leading-relaxed mb-6">{result.description}</p>
-            
-            <div className="flex gap-2">
-               <button 
-                 onClick={handleSave}
-                 disabled={saving || saved}
-                 className="flex-1 py-3 bg-blue-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-600 transition-all disabled:opacity-80"
-               >
-                 {saving ? (
-                   <Loader2 size={18} className="animate-spin" />
-                 ) : saved ? (
-                   <Check size={18} />
-                 ) : (
-                   <Save size={18} />
-                 )}
-                 {saved ? "¡Guardado!" : saving ? "Guardando..." : "Guardar Viaje"}
-               </button>
-               <button 
-                 onClick={() => setResult(null)}
-                 className="px-4 py-3 bg-white/10 dark:bg-slate-900/10 backdrop-blur-md rounded-xl text-sm font-bold hover:bg-white/20 dark:hover:bg-slate-900/20 transition-all"
-               >
-                 Nuevo
-               </button>
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-8 rounded-3xl shadow-xl shadow-blue-500/20 relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="relative z-10">
+              <h3 className="text-2xl font-black mb-3">{result.tripTitle}</h3>
+              <p className="text-white/90 text-sm leading-relaxed mb-6">{result.description}</p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={handleSave}
+                  disabled={saving || saved}
+                  className="flex-1 py-3 bg-white text-blue-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all disabled:opacity-80 shadow-lg"
+                >
+                  {saving ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : saved ? (
+                    <Check size={18} />
+                  ) : (
+                    <Save size={18} />
+                  )}
+                  {saved ? "¡Guardado!" : saving ? "Guardando..." : "Guardar Viaje"}
+                </button>
+                <button 
+                  onClick={() => setResult(null)}
+                  className="px-5 py-3 bg-white/20 backdrop-blur-md rounded-xl text-sm font-bold hover:bg-white/30 transition-all"
+                >
+                  Nuevo
+                </button>
+              </div>
             </div>
           </div>
 

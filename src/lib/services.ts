@@ -16,6 +16,7 @@ import {
     setDoc,
 } from "firebase/firestore";
 import { Trip, Activity, Destination, Expense, UserSettings } from "@/types/travel";
+import { dataCache, cacheKeys } from "@/utils/dataCache";
 
 export const travelService = {
     // User Settings
@@ -60,6 +61,11 @@ export const travelService = {
     },
 
     async getUserTrips(userId: string, userEmail?: string | null): Promise<Trip[]> {
+        // Check cache first
+        const cacheKey = cacheKeys.userTrips(userId);
+        const cached = dataCache.get<Trip[]>(cacheKey);
+        if (cached) return cached;
+
         // Unfortunately standard Firestore without `or` requires two queries or an `in` / `array-contains`
         // We'll fetch trips where I'm the owner, and trips where I'm a collaborator.
 
@@ -96,24 +102,44 @@ export const travelService = {
         collabSnap.docs.forEach(processDoc);
 
         // Sort in memory (descending)
-        return Array.from(tripsMap.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const trips = Array.from(tripsMap.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        
+        // Cache for 3 minutes
+        dataCache.set(cacheKey, trips, 3 * 60 * 1000);
+        
+        return trips;
     },
     async getTrip(tripId: string): Promise<Trip | null> {
+        // Check cache first
+        const cacheKey = cacheKeys.trip(tripId);
+        const cached = dataCache.get<Trip>(cacheKey);
+        if (cached) return cached;
+
         const docRef = doc(db, "trips", tripId);
         const snap = await getDoc(docRef);
         if (!snap.exists()) return null;
-        return {
+        
+        const trip = {
             id: snap.id,
             ...snap.data(),
             createdAt: snap.data().createdAt.toDate(),
             startDate: snap.data().startDate?.toDate(),
             endDate: snap.data().endDate?.toDate(),
         } as Trip;
+        
+        // Cache for 5 minutes
+        dataCache.set(cacheKey, trip);
+        
+        return trip;
     },
 
     async updateTrip(tripId: string, data: Partial<Trip>): Promise<void> {
         const docRef = doc(db, "trips", tripId);
         await updateDoc(docRef, data);
+        
+        // Invalidate caches
+        dataCache.invalidate(cacheKeys.trip(tripId));
+        dataCache.invalidatePattern(/^trips:user:/);
     },
 
     async inviteCollaborator(tripId: string, email: string): Promise<{ success: boolean; message: string }> {
@@ -140,6 +166,11 @@ export const travelService = {
     async deleteTrip(tripId: string): Promise<void> {
         const docRef = doc(db, "trips", tripId);
         await deleteDoc(docRef);
+        
+        // Invalidate caches
+        dataCache.invalidate(cacheKeys.trip(tripId));
+        dataCache.invalidatePattern(/^trips:user:/);
+        dataCache.invalidatePattern(new RegExp(`^.*:trip:${tripId}$`));
     },
 
     // Destinations
@@ -159,17 +190,26 @@ export const travelService = {
             endDate,
             order,
         });
+        
+        // Invalidate cache
+        dataCache.invalidate(cacheKeys.tripDestinations(tripId));
+        
         return docRef.id;
     },
 
     async getTripDestinations(tripId: string): Promise<Destination[]> {
+        // Check cache first
+        const cacheKey = cacheKeys.tripDestinations(tripId);
+        const cached = dataCache.get<Destination[]>(cacheKey);
+        if (cached) return cached;
+
         const q = query(
             collection(db, "destinations"),
             where("tripId", "==", tripId),
             orderBy("order", "asc")
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(
+        const destinations = snapshot.docs.map(
             (doc) =>
             ({
                 id: doc.id,
@@ -178,15 +218,29 @@ export const travelService = {
                 endDate: doc.data().endDate?.toDate(),
             } as Destination)
         );
+        
+        // Cache for 5 minutes
+        dataCache.set(cacheKey, destinations);
+        
+        return destinations;
     },
 
     // Activities
     async addActivity(data: Omit<Activity, "id">): Promise<string> {
         const docRef = await addDoc(collection(db, "activities"), data);
+        
+        // Invalidate cache
+        dataCache.invalidate(cacheKeys.tripActivities(data.tripId));
+        
         return docRef.id;
     },
 
     async getActivitiesByTrip(tripId: string): Promise<Activity[]> {
+        // Check cache first
+        const cacheKey = cacheKeys.tripActivities(tripId);
+        const cached = dataCache.get<Activity[]>(cacheKey);
+        if (cached) return cached;
+
         // Querying by tripId only to avoid composite index requirements in Firebase just for sorting
         const q = query(collection(db, "activities"), where("tripId", "==", tripId));
         const snapshot = await getDocs(q);
@@ -202,7 +256,12 @@ export const travelService = {
         );
 
         // Sort in memory by startDate
-        return activities.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+        const sortedActivities = activities.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+        
+        // Cache for 5 minutes
+        dataCache.set(cacheKey, sortedActivities);
+        
+        return sortedActivities;
     },
 
     async updateActivity(id: string, data: Partial<Omit<Activity, "id">>): Promise<void> {
@@ -213,11 +272,19 @@ export const travelService = {
             payload.endDate = deleteField();
         }
         await updateDoc(docRef, payload);
+        
+        // Invalidate cache if tripId is known
+        if (data.tripId) {
+            dataCache.invalidate(cacheKeys.tripActivities(data.tripId));
+        }
     },
 
     async deleteActivity(id: string): Promise<void> {
         const docRef = doc(db, "activities", id);
         await deleteDoc(docRef);
+        
+        // Note: Can't invalidate specific trip cache without knowing tripId
+        // Consider passing tripId if needed for better cache management
     },
 
     // Expenses

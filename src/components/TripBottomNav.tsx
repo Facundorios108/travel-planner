@@ -17,7 +17,7 @@ export default function TripBottomNav({ tripId }: TripBottomNavProps) {
         { id: "timeline", label: "Viaje", icon: Map, href: `/trip/${tripId}` },
         { id: "docs", label: "Docs", icon: FileText, href: `/trip/${tripId}/docs` },
         { id: "expenses", label: "Gastos", icon: Wallet, href: `/trip/${tripId}/expenses` },
-        { id: "profile", label: "Perfil", icon: User, href: `/?tab=profile` },
+        { id: "profile", label: "Inicio", icon: User, href: `/` },
     ];
 
     return (

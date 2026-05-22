@@ -68,7 +68,10 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                 alert("Por favor, selecciona las fechas de llegada y salida para todos los destinos.");
                 return;
             }
-            if (new Date(dest.endDate) < new Date(dest.startDate)) {
+            // Parsear fechas en zona horaria local para validación
+            const startLocal = new Date(dest.startDate + 'T00:00:00');
+            const endLocal = new Date(dest.endDate + 'T00:00:00');
+            if (endLocal < startLocal) {
                 alert(`La fecha de salida en ${dest.city} no puede ser anterior a la de llegada.`);
                 return;
             }
@@ -78,8 +81,9 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
 
         try {
             // Find the overall start and end dates from destinations
-            const startDates = destinations.map(d => new Date(d.startDate).getTime());
-            const endDates = destinations.map(d => new Date(d.endDate).getTime());
+            // Parsear fechas en zona horaria local para evitar problemas de timezone
+            const startDates = destinations.map(d => new Date(d.startDate + 'T00:00:00').getTime());
+            const endDates = destinations.map(d => new Date(d.endDate + 'T00:00:00').getTime());
 
             const overallStartDate = new Date(Math.min(...startDates));
             const overallEndDate = new Date(Math.max(...endDates));
@@ -97,7 +101,8 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                     tripId,
                     d.country,
                     d.city,
-                    new Date(d.startDate),
+                    new Date(d.startDate + 'T00:00:00'),
+                    new Date(d.endDate + 'T00:00:00'),
                     new Date(d.endDate),
                     i // Orden
                 );
@@ -116,10 +121,11 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
         let total = 0;
         destinations.forEach(dest => {
             if (dest.startDate && dest.endDate) {
-                const start = new Date(dest.startDate).getTime();
-                const end = new Date(dest.endDate).getTime();
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                // Parsear fechas en zona horaria local para evitar problemas de timezone
+                const start = new Date(dest.startDate + 'T00:00:00');
+                const end = new Date(dest.endDate + 'T00:00:00');
+                // Contar días inclusive: del 1 al 20 son 20 días
+                const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                 total += diffDays;
             }
         });
@@ -144,20 +150,23 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
             `}</style>
 
             {/* Header */}
-            <header className="flex items-center justify-between p-4 pt-6 bg-slate-50 dark:bg-slate-950 z-10 transition-colors">
-                <button onClick={onBack} className="flex items-center justify-center h-10 w-10 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 transition hover:bg-slate-300 dark:hover:bg-slate-700">
+            <header className="sticky top-0 flex items-center justify-between p-4 pt-6 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl z-20 transition-colors border-b border-slate-200/50 dark:border-slate-800/50">
+                <button onClick={onBack} className="flex items-center justify-center h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm">
                     <ArrowLeft size={20} />
                 </button>
-                <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Nuevo Viaje Multi-Destino</h1>
-                <div className="w-10"></div>
+                <div className="text-center">
+                    <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">Nuevo Viaje</h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Multi-destino</p>
+                </div>
+                <div className="w-11"></div>
             </header>
 
             {/* Form */}
             <main className="flex-1 overflow-y-auto px-6 pt-4 space-y-6 pb-32">
                 <form id="add-trip-form" onSubmit={handleSubmit} className="space-y-8">
                     {/* Trip Name */}
-                    <div className="space-y-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+                    <div className="space-y-3 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             Nombre del Viaje
                         </label>
                         <div className="relative group">
@@ -167,7 +176,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                 value={tripName}
                                 onChange={(e) => setTripName(e.target.value)}
                                 placeholder="Ej: Eurotrip 2024"
-                                className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base font-medium outline-none text-slate-900 dark:text-slate-100"
+                                className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base font-semibold outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                             />
                         </div>
                     </div>
@@ -186,12 +195,14 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                 const isFirst = index === 0;
                                 const isLast = index === destinations.length - 1;
 
-                                // Calcular días locales
+                                // Calcular días locales (inclusive)
                                 let diffDays = 0;
                                 if (dest.startDate && dest.endDate) {
-                                    const start = new Date(dest.startDate).getTime();
-                                    const end = new Date(dest.endDate).getTime();
-                                    diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
+                                    // Parsear fechas en zona horaria local para evitar problemas de timezone
+                                    const start = new Date(dest.startDate + 'T00:00:00');
+                                    const end = new Date(dest.endDate + 'T00:00:00');
+                                    // Contar días inclusive: del 1 al 20 son 20 días
+                                    diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                                 }
 
                                 return (
@@ -272,10 +283,10 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                         <button
                             type="button"
                             onClick={handleAddDestination}
-                            className="flex items-center gap-2 py-2 px-1 text-blue-500 hover:text-blue-600 transition-colors ml-12"
+                            className="flex items-center gap-2 py-3 px-5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all rounded-xl ml-8 font-bold text-sm"
                         >
                             <PlusCircle size={20} />
-                            <span className="text-sm font-bold">Añadir Destino</span>
+                            <span>Añadir Destino</span>
                         </button>
                     </div>
 
