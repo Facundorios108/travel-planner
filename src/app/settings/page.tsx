@@ -80,7 +80,7 @@ export default function SettingsPage() {
             setUnsavedChanges(false);
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert("Hubo un error al guardar los ajustes.");
+            window.alert("Error al guardar los ajustes.");
         } finally {
             setSaving(false);
         }

@@ -67,15 +67,21 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
 
         setIsSaving(true);
         try {
-            await onSave({
+            const activityData: any = {
                 tripId,
                 destinationId,
                 title,
                 description,
                 type,
                 startDate: new Date(startDate),
-                endDate: endDate ? new Date(endDate) : undefined,
-            });
+            };
+            
+            // Solo agregar endDate si tiene valor (Firebase no acepta undefined)
+            if (endDate) {
+                activityData.endDate = new Date(endDate);
+            }
+            
+            await onSave(activityData);
             onClose();
         } catch (err: any) {
             setError(err.message || "Error al guardar la actividad.");
@@ -85,37 +91,37 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity">
+            <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between px-8 py-6 shrink-0">
+                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
                         {existingActivity ? "Editar Actividad" : "Nueva Actividad"}
                     </h2>
-                    <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 duration-200">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="overflow-y-auto p-6 flex-1">
+                <div className="overflow-y-auto px-8 pb-2 flex-1">
                     {error && (
-                        <div className="mb-4 text-sm text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
+                        <div className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 p-4 rounded-2xl border-2 border-red-200 dark:border-red-900/30 font-medium">
                             {error}
                         </div>
                     )}
 
-                    <form id="activity-form" onSubmit={handleSubmit} className="space-y-6">
+                    <form id="activity-form" onSubmit={handleSubmit} className="space-y-7">
                         {/* Type Selection (Chips) */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Tipo de Actividad</label>
-                            <div className="flex flex-wrap gap-2">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Tipo de Actividad</label>
+                            <div className="flex flex-wrap gap-2.5">
                                 {ACTIVITY_TYPES.map((actType) => (
                                     <button
                                         key={actType.type}
                                         type="button"
                                         onClick={() => setType(actType.type)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition ${type === actType.type
-                                                ? "bg-blue-500 text-white shadow-sm ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900"
-                                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                        className={`flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold transition-all duration-200 ${type === actType.type
+                                                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105"
+                                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-105"
                                             }`}
                                     >
                                         {actType.icon}
@@ -127,24 +133,24 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
 
                         {/* Title */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Título</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Título</label>
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Ej: Vuelo Madrid-Paris, Tour Coliseo..."
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 required
                             />
                         </div>
 
                         {/* Destination */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Destino</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Destino</label>
                             <select
                                 value={destinationId}
                                 onChange={(e) => setDestinationId(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition appearance-none"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
                                 required
                             >
                                 <option value="" disabled>Selecciona un destino</option>
@@ -155,46 +161,47 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                         </div>
 
                         {/* Dates */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha/Hora Inicio</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Fecha/Hora Inicio</label>
                                 <input
                                     type="datetime-local"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Fecha/Hora Fin <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Fecha/Hora Fin <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
                                 <input
                                     type="datetime-local"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition"
+                                    min={startDate}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                         </div>
 
                         {/* Description */}
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Descripción</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Descripción <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Detalles de reserva, notas, etc."
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition resize-none min-h-[100px]"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none min-h-[120px]"
                             />
                         </div>
                     </form>
                 </div>
 
-                <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3 shrink-0">
+                <div className="px-8 pb-8 flex justify-end gap-4 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-3 font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl transition"
+                        className="px-8 py-3 font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-full transition-colors duration-200"
                     >
                         Cancelar
                     </button>
@@ -202,9 +209,9 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                         type="submit"
                         form="activity-form"
                         disabled={isSaving}
-                        className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition disabled:opacity-50"
+                        className="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-full shadow-xl shadow-blue-500/30 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 hover:scale-105 active:scale-95"
                     >
-                        {isSaving ? "Guardando..." : "Guardar Actividad"}
+                        {isSaving ? "Guardando..." : existingActivity ? "Actualizar" : "Crear Actividad"}
                     </button>
                 </div>
             </div>

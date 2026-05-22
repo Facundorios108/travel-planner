@@ -123,19 +123,19 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-[430px]">
-            {/* Stitch Minimal Header */}
+            {/* Modern Header */}
             {activeTab !== "profile" && (
-                <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
+                <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-5 bg-white/90 dark:bg-slate-950/90 backdrop-blur-2xl border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
+                        <div className="w-11 h-11 rounded-[1.1rem] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 transition-transform duration-200 hover:scale-105">
                             SF
                         </div>
-                        <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">StayFinder</h1>
+                        <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 bg-clip-text text-transparent tracking-tight">StayFinder</h1>
                     </div>
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
-                        <button className="w-10 h-10 flex items-center justify-center rounded-2xl glass text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all">
-                            <Bell size={20} />
+                        <button className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95">
+                            <Bell size={19} />
                         </button>
                     </div>
                 </header>

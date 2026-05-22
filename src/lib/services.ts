@@ -108,8 +108,8 @@ export const travelService = {
         // Sort in memory (descending)
         const trips = Array.from(tripsMap.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         
-        // Cache for 3 minutes
-        dataCache.set(cacheKey, trips, 3 * 60 * 1000);
+        // Cache for 10 minutes (increased from 3)
+        dataCache.set(cacheKey, trips, 10 * 60 * 1000);
         
         return trips;
     },
@@ -131,8 +131,8 @@ export const travelService = {
             endDate: snap.data().endDate?.toDate(),
         } as Trip;
         
-        // Cache for 5 minutes
-        dataCache.set(cacheKey, trip);
+        // Cache for 10 minutes (increased from 5)
+        dataCache.set(cacheKey, trip, 10 * 60 * 1000);
         
         return trip;
     },
@@ -147,7 +147,7 @@ export const travelService = {
         dataCache.invalidatePattern(new RegExp(`^.*:trip:${tripId}$`));
     },
 
-    async inviteCollaborator(tripId: string, email: string): Promise<{ success: boolean; message: string }> {
+    async inviteCollaborator(tripId: string, email: string, inviterName?: string): Promise<{ success: boolean; message: string }> {
         try {
             const tripSnap = await getDoc(doc(db, "trips", tripId));
             if (!tripSnap.exists()) return { success: false, message: "Viaje no encontrado" };
@@ -161,10 +161,58 @@ export const travelService = {
                 collaborators: [...currentCollabs, email]
             });
 
+            // Send email invitation
+            try {
+                await fetch('/api/send-invite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: email,
+                        tripName: tripData.name || 'Tu viaje',
+                        inviterName: inviterName || 'Un amigo',
+                        tripId: tripId
+                    })
+                });
+            } catch (emailError) {
+                console.error("Error sending email:", emailError);
+                // Don't fail the whole operation if email fails
+            }
+
+            // Invalidate cache
+            dataCache.invalidate(cacheKeys.trip(tripId));
+            dataCache.invalidatePattern(/^trips:user:/);
+
             return { success: true, message: "Invitación enviada exitosamente" };
         } catch (error) {
             console.error("Error inviting collaborator", error);
             return { success: false, message: "Error al invitar colaborador" };
+        }
+    },
+
+    async removeCollaborator(tripId: string, email: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const tripSnap = await getDoc(doc(db, "trips", tripId));
+            if (!tripSnap.exists()) return { success: false, message: "Viaje no encontrado" };
+
+            const tripData = tripSnap.data();
+            const currentCollabs = tripData.collaborators || [];
+
+            if (!currentCollabs.includes(email)) return { success: false, message: "El usuario no es colaborador" };
+
+            const updatedCollabs = currentCollabs.filter((collab: string) => collab !== email);
+
+            await updateDoc(doc(db, "trips", tripId), {
+                collaborators: updatedCollabs
+            });
+
+            // Invalidate cache
+            dataCache.invalidate(cacheKeys.trip(tripId));
+            dataCache.invalidatePattern(/^trips:user:/);
+
+            return { success: true, message: "Colaborador eliminado exitosamente" };
+        } catch (error) {
+            console.error("Error removing collaborator", error);
+            return { success: false, message: "Error al eliminar colaborador" };
         }
     },
 
@@ -225,8 +273,8 @@ export const travelService = {
             } as Destination)
         );
         
-        // Cache for 5 minutes
-        dataCache.set(cacheKey, destinations);
+        // Cache for 10 minutes (increased from 5)
+        dataCache.set(cacheKey, destinations, 10 * 60 * 1000);
         
         return destinations;
     },
@@ -264,8 +312,8 @@ export const travelService = {
         // Sort in memory by startDate
         const sortedActivities = activities.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
         
-        // Cache for 5 minutes
-        dataCache.set(cacheKey, sortedActivities);
+        // Cache for 10 minutes (increased from 5)
+        dataCache.set(cacheKey, sortedActivities, 10 * 60 * 1000);
         
         return sortedActivities;
     },

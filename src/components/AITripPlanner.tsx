@@ -61,7 +61,7 @@ export default function AITripPlanner() {
       setResult(data);
     } catch (error) {
       console.error("AI Generation failed:", error);
-      alert("Hubo un error al generar tu viaje. Por favor intenta de nuevo.");
+      window.alert("Error al generar tu viaje. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function AITripPlanner() {
       }, 1500);
     } catch (error) {
       console.error("Error saving trip:", error);
-      alert("Error al guardar el viaje.");
+      window.alert("Error al guardar el viaje. Intenta de nuevo.");
     } finally {
       setSaving(false);
     }

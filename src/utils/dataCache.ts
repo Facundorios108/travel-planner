@@ -1,6 +1,6 @@
 /**
- * Simple in-memory cache for Firebase data
- * Reduces unnecessary Firestore reads and improves performance
+ * Optimized in-memory cache for Firebase data
+ * Reduces unnecessary Firestore reads and improves performance dramatically
  */
 
 interface CacheEntry<T> {
@@ -11,7 +11,7 @@ interface CacheEntry<T> {
 
 class DataCache {
   private cache: Map<string, CacheEntry<any>> = new Map();
-  private defaultTTL = 5 * 60 * 1000; // 5 minutes default
+  private defaultTTL = 10 * 60 * 1000; // 10 minutes default (increased from 5)
 
   /**
    * Get data from cache if it exists and hasn't expired
@@ -73,6 +73,13 @@ class DataCache {
    */
   size(): number {
     return this.cache.size;
+  }
+  
+  /**
+   * Check if key exists in cache (even if expired)
+   */
+  has(key: string): boolean {
+    return this.cache.has(key);
   }
 }
 

@@ -61,18 +61,18 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
         // Validación básica
         for (const dest of destinations) {
             if (!dest.city || !dest.country) {
-                alert("Por favor, selecciona una ciudad y país para todos los destinos.");
+                window.alert("Por favor, completa ciudad y país para todos los destinos.");
                 return;
             }
             if (!dest.startDate || !dest.endDate) {
-                alert("Por favor, selecciona las fechas de llegada y salida para todos los destinos.");
+                window.alert("Por favor, ingresa las fechas para todos los destinos.");
                 return;
             }
             // Parsear fechas en zona horaria local para validación
             const startLocal = new Date(dest.startDate + 'T00:00:00');
             const endLocal = new Date(dest.endDate + 'T00:00:00');
             if (endLocal < startLocal) {
-                alert(`La fecha de salida en ${dest.city} no puede ser anterior a la de llegada.`);
+                window.alert(`La fecha de salida en ${dest.city} debe ser después de la llegada.`);
                 return;
             }
         }
@@ -111,7 +111,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
             onTripCreated();
         } catch (error) {
             console.error("Error saving trip:", error);
-            alert("Hubo un error al guardar el viaje.");
+            window.alert("Error al guardar el viaje. Intenta de nuevo.");
         } finally {
             setLoading(false);
         }

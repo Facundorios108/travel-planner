@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useTransition, startTransition } from "react";
 import { ChevronLeft, CalendarDays, Clock, Plus, Loader2, PlaneLanding, Hotel, Car, MapPin, Activity as ActivityIcon, MoreHorizontal, Trash2, Edit2, PlusCircle } from "lucide-react";
 import { travelService } from "@/lib/services";
 import { Trip, Destination, Activity, ActivityType } from "@/types/travel";
@@ -12,10 +12,12 @@ import { AddDestinationModal } from "@/components/AddDestinationModal";
 import { EditTripModal } from "@/components/EditTripModal";
 import TripBottomNav from "@/components/TripBottomNav";
 import { ShareTripModal } from "@/components/ShareTripModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Trash2 as TrashIcon, AlertTriangle, Users } from "lucide-react";
 
 export default function TripItinerary({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
+    const [isPending, startTransition] = useTransition();
 
     // Unwrap the generic params object
     const resolvedParams = use(params);
@@ -37,27 +39,46 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // ConfirmDialog state
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title?: string;
+        message: string;
+        onConfirm: () => void;
+    }>({ isOpen: false, message: "", onConfirm: () => {} });
+
     // Calendar View state
     const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
 
     useEffect(() => {
+        let mounted = true;
+        
         async function loadData() {
             try {
+                // Load data in parallel with cache support
                 const [tripData, destinationsData, activitiesData] = await Promise.all([
                     travelService.getTrip(tripId),
                     travelService.getTripDestinations(tripId),
                     travelService.getActivitiesByTrip(tripId)
                 ]);
+                
+                if (!mounted) return;
+                
                 setTrip(tripData);
                 setDestinations(destinationsData);
                 setActivities(activitiesData);
             } catch (error) {
                 console.error("Failed to load itinerary:", error);
             } finally {
-                setLoading(false);
+                if (mounted) setLoading(false);
             }
         }
+        
         loadData();
+        
+        return () => {
+            mounted = false;
+        };
     }, [tripId]);
 
     if (loading) {
@@ -97,10 +118,15 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
     };
 
     const handleDeleteActivity = async (id: string) => {
-        if (confirm("¿Estás seguro de que deseas eliminar esta actividad?")) {
-            await travelService.deleteActivity(id);
-            setActivities(activities.filter(a => a.id !== id));
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title: "Eliminar actividad",
+            message: "¿Estás seguro de que deseas eliminar esta actividad?",
+            onConfirm: async () => {
+                await travelService.deleteActivity(id);
+                setActivities(activities.filter(a => a.id !== id));
+            }
+        });
     };
 
     const openEditModal = (activity: Activity) => {
@@ -138,7 +164,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             router.push("/");
         } catch (err) {
             console.error("Error deleting trip:", err);
-            alert("Ocurrió un error al eliminar el viaje.");
+            window.alert("Error al eliminar el viaje.");
             setIsDeleting(false);
             setIsDeleteModalOpen(false);
         }
@@ -156,25 +182,46 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 relative pb-24 text-slate-900 dark:text-slate-100">
-            {/* Header Itinerario - Hero Image Style */}
-            <header className="relative h-64 sm:h-72 w-full overflow-hidden shrink-0">
+            {/* Header Itinerario - Hero Image Style - SIMPLIFICADO */}
+            <header className="relative h-72 sm:h-80 w-full overflow-hidden shrink-0">
                 <div
                     className="absolute inset-0 bg-cover bg-center transition-all duration-700"
                     style={{ backgroundImage: `url('${trip.coverImage || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop"}')` }}
                 />
-                {/* Gradient overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-slate-50 dark:to-slate-950"></div>
+                {/* Gradient overlay mejorado */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-slate-50 dark:to-slate-950"></div>
 
-                {/* Top Nav Area */}
-                <div className="absolute top-0 left-0 right-0 px-4 pt-8 pb-4 flex justify-between items-start z-30 pointer-events-none">
-                    <button onClick={() => router.push("/")} className="pointer-events-auto w-11 h-11 flex items-center justify-center bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition shadow-sm">
-                        <ChevronLeft size={24} />
+                {/* Top Nav Area - MAS LIMPIA */}
+                <div className="absolute top-0 left-0 right-0 px-6 pt-10 pb-4 flex justify-between items-start z-30">
+                    <button 
+                        onClick={() => router.push("/")} 
+                        className="w-12 h-12 flex items-center justify-center bg-white/25 hover:bg-white/40 backdrop-blur-2xl rounded-full text-white transition-all duration-200 shadow-xl hover:scale-110 active:scale-95"
+                    >
+                        <ChevronLeft size={22} />
                     </button>
-                    <div className="flex flex-col items-end gap-2">
-                        <label
-                            className={`relative pointer-events-auto flex items-center justify-end gap-2 px-3 py-1.5 backdrop-blur-md rounded-lg text-white text-xs font-bold transition shadow-sm cursor-pointer overflow-hidden ${isUploadingImage ? 'bg-blue-500/80 cursor-wait' : 'bg-white/20 hover:bg-white/40'}`}
+                    
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsEditTripModalOpen(true)}
+                            className="w-11 h-11 flex items-center justify-center bg-white/25 hover:bg-white/40 backdrop-blur-2xl rounded-full text-white transition-all duration-200 shadow-xl hover:scale-110 active:scale-95"
+                            title="Editar Viaje"
                         >
-                            {isUploadingImage ? <Loader2 size={14} className="animate-spin" /> : <Edit2 size={14} />}
+                            <Edit2 size={18} />
+                        </button>
+                        <button
+                            onClick={() => setIsShareModalOpen(true)}
+                            className="w-11 h-11 flex items-center justify-center bg-white/25 hover:bg-white/40 backdrop-blur-2xl rounded-full text-white transition-all duration-200 shadow-xl hover:scale-110 active:scale-95 relative"
+                            title="Compartir Viaje"
+                        >
+                            <Users size={18} />
+                            {trip.collaborators && trip.collaborators.length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-indigo-500 rounded-full border-2 border-white"></span>
+                            )}
+                        </button>
+                        <label
+                            className={`relative flex items-center justify-center gap-2.5 px-4 py-2.5 backdrop-blur-2xl rounded-full text-white text-xs font-bold transition-all duration-200 shadow-xl cursor-pointer ${isUploadingImage ? 'bg-blue-500/90 cursor-wait' : 'bg-white/25 hover:bg-white/40 hover:scale-105 active:scale-95'}`}
+                        >
+                            {isUploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Edit2 size={16} />}
                             {isUploadingImage ? 'Subiendo...' : 'Editar Foto'}
                             <input
                                 type="file"
@@ -207,7 +254,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                                 setTrip((prev) => prev ? { ...prev, coverImage: base64String } : null);
                                             } catch (err) {
                                                 console.error("Failed to upload image:", err);
-                                                alert("No se pudo guardar la imagen. La foto sigue siendo muy pesada para la base de datos gratuita. Intenta con una imagen más sencilla.");
+                                                window.alert("No se pudo guardar la imagen. Intenta con una foto más liviana.");
                                             } finally {
                                                 setIsUploadingImage(false);
                                             }
@@ -218,64 +265,45 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                 }}
                             />
                         </label>
-                        {/* El botón de eliminar se movió abajo a pedido del usuario */}
                     </div>
                 </div>
 
-                {/* Bottom Title Area */}
-                <div className="absolute bottom-6 left-4 right-4 z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pointer-events-none">
-                    <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-lg">{trip.name}</h1>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setIsEditTripModalOpen(true)}
-                                    className="pointer-events-auto p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition shadow-sm"
-                                    title="Editar Viaje"
-                                >
-                                    <Edit2 size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setIsShareModalOpen(true)}
-                                    className="pointer-events-auto p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition shadow-sm relative"
-                                    title="Compartir Viaje"
-                                >
-                                    <Users size={16} />
-                                    {trip.collaborators && trip.collaborators.length > 0 && (
-                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                        <div className="text-slate-600 dark:text-slate-300 font-bold text-sm tracking-wide flex flex-col items-start pointer-events-auto">
-                            <span>{destinations.map(d => d.city).join(' • ') || 'Sin destinos'}</span>
-                            {trip.startDate && (
-                                <span className="text-sm text-blue-100 bg-blue-600 border border-blue-500/50 px-2.5 py-1 rounded-md mt-2 flex items-center gap-1.5 shadow-sm">
-                                    <Clock size={14} />
-                                    Inicia el {format(new Date(trip.startDate), "d 'de' MMMM, yyyy", { locale: es })}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    {/* View Switcher */}
-                    <div className="shrink-0 pointer-events-auto">
-                        <div className="flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-1 rounded-full w-full sm:w-44 shadow-sm border border-slate-200 dark:border-slate-800">
-                            <button
-                                onClick={() => setView("timeline")}
-                                className={`flex-1 rounded-full py-1.5 text-[10px] sm:text-xs font-bold transition ${view === "timeline" ? "bg-blue-500 shadow-sm text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}
-                            >
-                                Timeline
-                            </button>
-                            <button
-                                onClick={() => setView("calendar")}
-                                className={`flex-1 rounded-full py-1.5 text-[10px] sm:text-xs font-bold transition ${view === "calendar" ? "bg-blue-500 shadow-sm text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}
-                            >
-                                Calendar
-                            </button>
-                        </div>
+                {/* Bottom Title Area - MAS ESPACIOSA */}
+                <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 z-10 bg-gradient-to-t from-black/60 via-black/20 to-transparent pt-16">
+                    <div className="flex flex-col gap-3">
+                        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white drop-shadow-2xl">{trip.name}</h1>
+                        <p className="text-white/90 font-medium text-base">
+                            {destinations.map(d => d.city).join(' • ') || 'Sin destinos'}
+                        </p>
+                        {trip.startDate && (
+                            <span className="inline-flex items-center gap-2 text-sm text-white bg-white/20 backdrop-blur-xl border border-white/30 px-4 py-2 rounded-full mt-1 w-fit shadow-lg" suppressHydrationWarning>
+                                <Clock size={15} />
+                                {typeof window !== "undefined" && format(new Date(trip.startDate), "d 'de' MMMM, yyyy", { locale: es })}
+                            </span>
+                        )}
                     </div>
                 </div>
             </header>
+
+            {/* View Switcher - FUERA DEL HEADER */}
+            <div className="sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-2xl px-6 py-4">
+                <div className="flex justify-center">
+                    <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-full shadow-md">
+                        <button
+                            onClick={() => setView("timeline")}
+                            className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${view === "timeline" ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
+                        >
+                            Timeline
+                        </button>
+                        <button
+                            onClick={() => setView("calendar")}
+                            className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${view === "calendar" ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
+                        >
+                            Calendar
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {/* Main Content */}
             <main className="max-w-lg mx-auto px-6 mt-4">
@@ -285,11 +313,11 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                             <div key={dest.id} className="mb-10">
                                 {/* Destination Indicator */}
                                 <div className="flex items-center gap-4 mb-6">
-                                    <div className="bg-blue-500 text-white px-4 py-2 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm border border-blue-600">
+                                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap shadow-lg shadow-blue-500/30">
                                         Destino {i + 1}
                                     </div>
                                     <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 truncate">{dest.city}</h3>
-                                    <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800"></div>
+                                    <div className="h-[2px] flex-1 bg-gradient-to-r from-slate-300 to-transparent dark:from-slate-700"></div>
                                 </div>
 
                                 {/* Timeline Container */}
@@ -302,15 +330,15 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                             {/* Timeline Node Dot for empty state */}
                                             <div className="absolute left-0 top-10 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 border-2 border-slate-50 dark:border-slate-950 -translate-x-1/2 z-10"></div>
 
-                                            <div className="bg-slate-50 dark:bg-slate-800/30 p-5 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-start">
-                                                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-400 shadow-sm border border-slate-100 dark:border-slate-700">
-                                                    <Clock size={18} />
+                                            <div className="bg-slate-50 dark:bg-slate-800/30 p-6 rounded-[1.5rem] border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-start transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-700">
+                                                <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-[1rem] flex items-center justify-center mb-4 text-slate-400 shadow-sm border border-slate-200 dark:border-slate-700">
+                                                    <Clock size={20} />
                                                 </div>
-                                                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">Sin actividades</h4>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Empieza a planear tu día en {dest.city}.</p>
+                                                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-2">Sin actividades</h4>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Empieza a planear tu día en {dest.city}.</p>
                                                 <button
                                                     onClick={() => openNewModal()}
-                                                    className="px-4 py-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 text-sm font-bold rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-500/50 transition-all flex items-center gap-2"
+                                                    className="px-5 py-2.5 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 text-sm font-bold rounded-full shadow-md border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 flex items-center gap-2 hover:scale-105 active:scale-95 hover:shadow-lg"
                                                 >
                                                     <Plus size={16} /> Añadir Actividad
                                                 </button>
@@ -322,34 +350,36 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                         .filter(a => a.destinationId === dest.id)
                                         .map((activity) => (
                                             <div key={activity.id} className="relative pl-8 sm:pl-10 group mt-6">
-                                                <div className="absolute left-0 top-6 w-4 h-4 rounded-full bg-blue-500 border-4 border-slate-50 dark:border-slate-950 -translate-x-1/2 z-10 shadow-sm transition-transform duration-300 group-hover:scale-125"></div>
-                                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 sm:p-5 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md hover:border-blue-100 dark:hover:border-blue-900/50 relative overflow-hidden">
+                                                <div className="absolute left-0 top-6 w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border-4 border-slate-50 dark:border-slate-950 -translate-x-1/2 z-10 shadow-lg shadow-blue-500/30 transition-transform duration-200 group-hover:scale-125"></div>
+                                                <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] p-5 sm:p-6 shadow-md border border-slate-200/60 dark:border-slate-800/60 transition-all duration-200 hover:shadow-xl hover:border-blue-200/60 dark:hover:border-blue-800/60 hover:-translate-y-1 relative overflow-hidden">
 
                                                     {/* Edit/Delete Actions */}
-                                                    <div className="absolute top-3 right-3 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-20">
-                                                        <button onClick={() => openEditModal(activity)} className="p-1.5 text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition">
+                                                    <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 z-20">
+                                                        <button onClick={() => openEditModal(activity)} className="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95">
                                                             <Edit2 size={16} />
                                                         </button>
-                                                        <button onClick={() => handleDeleteActivity(activity.id)} className="p-1.5 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition">
+                                                        <button onClick={() => handleDeleteActivity(activity.id)} className="p-2 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95">
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>
 
-                                                    <div className="flex justify-between items-start mb-3 pr-16 bg-white dark:bg-slate-900 z-10 relative">
-                                                        <div className="p-2.5 bg-blue-50/50 dark:bg-blue-500/10 rounded-lg text-blue-500 dark:text-blue-400">
+                                                    <div className="flex justify-between items-start mb-4 pr-20 relative z-10">
+                                                        <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 rounded-[1.2rem] text-blue-600 dark:text-blue-400 shadow-sm">
                                                             {getActivityIcon(activity.type)}
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 rounded-md border border-slate-100 dark:border-slate-700">
-                                                                {format(activity.startDate, "HH:mm", { locale: es })}
-                                                                {activity.endDate && ` - ${format(activity.endDate, "HH:mm", { locale: es })}`}
+                                                            <span className="inline-block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200/60 dark:border-slate-700/60" suppressHydrationWarning>
+                                                                {typeof window !== "undefined" && format(activity.startDate, "HH:mm", { locale: es })}
+                                                                {activity.endDate && typeof window !== "undefined" && ` - ${format(activity.endDate, "HH:mm", { locale: es })}`}
                                                             </span>
-                                                            <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-widest">{format(activity.startDate, "dd MMM yyyy", { locale: es })}</p>
+                                                            <p className="text-[10px] text-slate-400 mt-2 uppercase font-bold tracking-widest" suppressHydrationWarning>
+                                                                {typeof window !== "undefined" && format(activity.startDate, "dd MMM yyyy", { locale: es })}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <h4 className="font-bold text-sm sm:text-base mb-1 text-slate-800 dark:text-slate-200 pr-12 relative z-10">{activity.title}</h4>
                                                     {activity.description && (
-                                                        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg whitespace-pre-line border border-slate-100/50 dark:border-slate-800/50 relative z-10">
+                                                        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-4 p-4 bg-slate-50/80 dark:bg-slate-800/50 rounded-xl whitespace-pre-line border border-slate-200/50 dark:border-slate-700/50 relative z-10">
                                                             {activity.description}
                                                         </p>
                                                     )}
@@ -361,10 +391,10 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                         ))}
 
                         {/* Add Destination Button at the end of Timeline */}
-                        <div className="mt-8 flex justify-center">
+                        <div className="mt-10 flex justify-center">
                             <button
                                 onClick={() => setIsAddDestinationModalOpen(true)}
-                                className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 text-blue-500 font-bold rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-500/50 hover:shadow-md transition-all active:scale-95"
+                                className="flex items-center gap-2 px-7 py-3.5 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold rounded-full shadow-lg border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
                             >
                                 <PlusCircle size={20} />
                                 Añadir Nuevo Destino
@@ -532,6 +562,11 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
                 trip={trip}
+                onTripUpdate={async () => {
+                    // Reload trip data to get updated collaborators
+                    const updatedTrip = await travelService.getTrip(tripId);
+                    setTrip(updatedTrip);
+                }}
             />
 
             {/* Delete Trip Confirmation Modal */}
@@ -564,6 +599,17 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                     </div>
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                onConfirm={confirmDialog.onConfirm}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                variant="danger"
+            />
 
             <TripBottomNav tripId={tripId} />
         </div>

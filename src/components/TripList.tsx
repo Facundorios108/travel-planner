@@ -5,7 +5,7 @@ import { format, differenceInMonths, differenceInWeeks, differenceInDays, differ
 import { es } from "date-fns/locale/es";
 import { Clock, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, memo, useCallback } from "react";
+import { useEffect, useState, memo, useCallback, useTransition } from "react";
 
 // Helper component for start date display
 const StartDateDisplay = memo(function StartDateDisplay({ startDate }: { startDate: Date | undefined }) {
@@ -42,7 +42,7 @@ const StartDateDisplay = memo(function StartDateDisplay({ startDate }: { startDa
     }, [startDate]);
 
     return (
-        <span className="text-sm font-bold text-blue-500" suppressHydrationWarning>
+        <span className="text-sm font-bold text-blue-600 dark:text-blue-400" suppressHydrationWarning>
             {statusText}
         </span>
     );
@@ -50,10 +50,18 @@ const StartDateDisplay = memo(function StartDateDisplay({ startDate }: { startDa
 
 // Memoized trip card component
 const TripCard = memo(function TripCard({ trip, onClick }: { trip: Trip; onClick: () => void }) {
+    const [isPending, startTransition] = useTransition();
+    
+    const handleClick = () => {
+        startTransition(() => {
+            onClick();
+        });
+    };
+    
     return (
         <div
-            onClick={onClick}
-            className="group relative bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-200/50 dark:border-slate-800/50 shadow-xl shadow-slate-200/20 dark:shadow-none transition-all hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+            onClick={handleClick}
+            className="group relative bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-200/40 dark:border-slate-800/40 shadow-lg shadow-slate-200/30 dark:shadow-black/30 transition-all duration-200 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 hover:border-blue-200/60 dark:hover:border-blue-800/60 cursor-pointer active:scale-[0.98]"
         >
             {/* Upper Half: Image with Date Badge */}
             <div className="h-56 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden relative">
@@ -65,34 +73,29 @@ const TripCard = memo(function TripCard({ trip, onClick }: { trip: Trip; onClick
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
 
                 {/* Date Badge */}
-                <div className="absolute top-6 right-6 glass px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white border border-white/20" suppressHydrationWarning>
+                <div className="absolute top-5 right-5 bg-white/20 backdrop-blur-xl px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white border border-white/40 shadow-lg" suppressHydrationWarning>
                     {typeof window !== "undefined"
                         ? format(trip.startDate || trip.createdAt, "dd MMM", { locale: es })
                         : ""}
                 </div>
                 
-                {/* Destination Mini Label */}
+                {/* Trip Name Label */}
                 <div className="absolute bottom-6 left-6 text-white">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Destino</p>
-                    <p className="text-sm font-bold truncate max-w-[200px]">{trip.destination}</p>
+                    <p className="text-sm font-extrabold truncate max-w-[280px] drop-shadow-lg">{trip.name}</p>
                 </div>
             </div>
 
             {/* Lower Half: Info and Meta */}
-            <div className="p-6">
+            <div className="p-5">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-blue-500 transition-colors">{trip.name}</h3>
-                    <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center transition-transform group-hover:rotate-12">
-                        <ChevronRight size={20} />
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                            <Clock size={14} className="text-blue-500" />
+                    <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                        <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center border border-blue-100 dark:border-blue-800/30">
+                            <Clock size={15} className="text-blue-600 dark:text-blue-400" />
                         </div>
                         <StartDateDisplay startDate={trip.startDate} />
+                    </div>
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:rotate-12 shadow-lg shadow-blue-500/30">
+                        <ChevronRight size={20} />
                     </div>
                 </div>
             </div>

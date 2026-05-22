@@ -32,7 +32,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
         e.preventDefault();
 
         if (!title || !amount || isNaN(Number(amount))) {
-            alert("Por favor completa el título y el monto validamente.");
+            window.alert("Por favor completa el título y monto.");
             return;
         }
 
@@ -51,38 +51,41 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:fade-in duration-300">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Añadir Gasto</h2>
+                <div className="px-8 py-6 flex justify-between items-center">
+                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Añadir Gasto</h2>
                     <button
                         onClick={onClose}
-                        className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                        className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Title & Amount inline */}
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <div className="flex-[2]">
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                    Título
-                                </label>
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                                    placeholder="Ej. Cena restaurante"
-                                />
-                            </div>
-                            <div className="flex-[1]">
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                <div className="px-8 pb-8">
+                    <form onSubmit={handleSubmit} className="space-y-7">
+                        {/* Title */}
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                Título del Gasto
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                placeholder="Ej. Cena restaurante"
+                                autoFocus
+                            />
+                        </div>
+
+                        {/* Amount & Date */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                                     Monto
                                 </label>
                                 <input
@@ -90,63 +93,64 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                                     step="0.01"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-medium"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-lg font-bold placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     placeholder="0.00"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                    Fecha
+                                </label>
+                                <input
+                                    type="date"
+                                    value={format(date, "yyyy-MM-dd")}
+                                    onChange={(e) => {
+                                        if (e.target.value) setDate(new Date(e.target.value));
+                                    }}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                         </div>
 
-                        {/* Date */}
+                        {/* Categoría */}
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                Fecha
-                            </label>
-                            <input
-                                type="date"
-                                value={format(date, "yyyy-MM-dd")}
-                                onChange={(e) => {
-                                    if (e.target.value) setDate(new Date(e.target.value));
-                                }}
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                            />
-                        </div>
-
-                        {/* Chips / Categories */}
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                                 Categoría
                             </label>
-                            <div className="flex flex-wrap gap-2">
-                                {categories.map((cat) => (
-                                    <button
-                                        key={cat.value}
-                                        type="button"
-                                        onClick={() => setCategory(cat.value)}
-                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${category === cat.value
-                                            ? "border-primary bg-primary/10 text-primary"
-                                            : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-                                            }`}
-                                    >
-                                        <cat.icon size={16} />
-                                        {cat.label}
-                                    </button>
-                                ))}
+                            <div className="flex flex-wrap gap-2.5">
+                                {categories.map((cat) => {
+                                    const Icon = cat.icon;
+                                    return (
+                                        <button
+                                            key={cat.value}
+                                            type="button"
+                                            onClick={() => setCategory(cat.value)}
+                                            className={`flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold transition-all duration-200 ${category === cat.value
+                                                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105"
+                                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-105"
+                                                }`}
+                                        >
+                                            <Icon size={16} />
+                                            {cat.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="pt-4 grid grid-cols-2 gap-3">
+                        <div className="pt-6 grid grid-cols-2 gap-4">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="w-full font-bold px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                                className="w-full font-bold px-6 py-4 rounded-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 disabled={isSaving}
-                                className="w-full font-bold px-6 py-4 rounded-xl text-white bg-[#1877F2] hover:bg-blue-600 border border-blue-400 shadow-[0_4px_12px_rgba(24,119,242,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                className="w-full font-bold px-6 py-4 rounded-full text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-xl shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                             >
                                 {isSaving ? "Guardando..." : "Guardar Gasto"}
                             </button>

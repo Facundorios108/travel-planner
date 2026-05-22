@@ -8,6 +8,7 @@ import TripBottomNav from "@/components/TripBottomNav";
 import { ArrowLeft, Search, Ticket, Bed, IdCard, Train, Car, ChevronRight, Plus, FileText, Trash2, Loader2, X } from "lucide-react";
 import { AddDocumentModal } from "@/components/AddDocumentModal";
 import { getDocumentFromCache, deleteDocumentFromCache } from "@/utils/documentCache";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function DocumentsPage() {
     const params = useParams();
@@ -21,6 +22,14 @@ export default function DocumentsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    
+    // ConfirmDialog state
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title?: string;
+        message: string;
+        onConfirm: () => void;
+    }>({ isOpen: false, message: "", onConfirm: () => {} });
 
     useEffect(() => {
         const loadDocs = async () => {
@@ -55,17 +64,23 @@ export default function DocumentsPage() {
 
     const handleDelete = async (e: React.MouseEvent, docItem: TripDocument) => {
         e.stopPropagation();
-        if (confirm("¿Eliminar este documento?")) {
-            try {
-                await travelService.deleteDocument(docItem.id!);
-                if (docItem.url?.startsWith("localcache_")) {
-                    await deleteDocumentFromCache(docItem.url);
+        setConfirmDialog({
+            isOpen: true,
+            title: "Eliminar documento",
+            message: `¿Estás seguro de que deseas eliminar "${docItem.title}"?`,
+            onConfirm: async () => {
+                try {
+                    await travelService.deleteDocument(docItem.id!);
+                    if (docItem.url?.startsWith("localcache_")) {
+                        await deleteDocumentFromCache(docItem.url);
+                    }
+                    setDocuments(documents.filter(d => d.id !== docItem.id));
+                } catch (err) {
+                    console.error("Error deleting doc", err);
+                    window.alert("Error al eliminar el documento.");
                 }
-                setDocuments(documents.filter(d => d.id !== docItem.id));
-            } catch (err) {
-                console.error("Error deleting doc", err);
             }
-        }
+        });
     };
 
     const handleOpenDocument = async (url: string) => {
@@ -76,7 +91,7 @@ export default function DocumentsPage() {
                 if (cachedData) {
                     finalUrl = cachedData;
                 } else {
-                    alert("El archivo no se encuentra en el caché local de este dispositivo.");
+                    window.alert("Éste archivo no está disponible sin conexión en este dispositivo.");
                     return;
                 }
             }
@@ -100,7 +115,7 @@ export default function DocumentsPage() {
             }
         } catch (error) {
             console.error("Error opening document", error);
-            alert("Hubo un error al abrir el documento.");
+            window.alert("Error al abrir el documento.");
         }
     };
 
@@ -288,6 +303,17 @@ export default function DocumentsPage() {
                     />
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                onConfirm={confirmDialog.onConfirm}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                variant="danger"
+            />
 
             <TripBottomNav tripId={tripId} />
         </div>

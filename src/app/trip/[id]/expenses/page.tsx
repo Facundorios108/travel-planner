@@ -61,7 +61,7 @@ export default function ExpensesPage() {
             setIsAddExpenseModalOpen(false);
         } catch (error) {
             console.error("Error saving expense:", error);
-            alert("Error al guardar gasto.");
+            window.alert("Error al guardar gasto.");
         }
     };
 
@@ -216,7 +216,7 @@ export default function ExpensesPage() {
                 {activeTab === "analytics" ? (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Category Chart */}
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 [&_svg]:outline-none [&_*]:outline-none">
                             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                                 <PieChartIcon size={20} className="text-blue-500" /> Distribución por Categoría
                             </h3>
@@ -261,7 +261,7 @@ export default function ExpensesPage() {
                         </div>
 
                         {/* Daily Trend Chart */}
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 [&_svg]:outline-none [&_*]:outline-none">
                             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                                 <BarChart3 size={20} className="text-blue-500" /> Gastos Diarios
                             </h3>
