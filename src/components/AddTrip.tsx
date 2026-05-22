@@ -103,7 +103,6 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                     d.city,
                     new Date(d.startDate + 'T00:00:00'),
                     new Date(d.endDate + 'T00:00:00'),
-                    new Date(d.endDate),
                     i // Orden
                 );
             }
