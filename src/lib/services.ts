@@ -57,6 +57,10 @@ export const travelService = {
         if (endDate) tripData.endDate = endDate;
 
         const docRef = await addDoc(collection(db, "trips"), tripData);
+        
+        // Invalidate user trips cache
+        dataCache.invalidatePattern(/^trips:user:/);
+        
         return docRef.id;
     },
 
@@ -140,6 +144,7 @@ export const travelService = {
         // Invalidate caches
         dataCache.invalidate(cacheKeys.trip(tripId));
         dataCache.invalidatePattern(/^trips:user:/);
+        dataCache.invalidatePattern(new RegExp(`^.*:trip:${tripId}$`));
     },
 
     async inviteCollaborator(tripId: string, email: string): Promise<{ success: boolean; message: string }> {
@@ -191,8 +196,9 @@ export const travelService = {
             order,
         });
         
-        // Invalidate cache
+        // Invalidate caches
         dataCache.invalidate(cacheKeys.tripDestinations(tripId));
+        dataCache.invalidate(cacheKeys.trip(tripId));
         
         return docRef.id;
     },

@@ -70,8 +70,10 @@ export default function Dashboard() {
 
     const handleTabChange = useCallback((tab: "home" | "ai" | "docs" | "profile") => {
         setActiveTab(tab);
-        const newUrl = tab === "home" ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
-        window.history.pushState({ path: newUrl }, '', newUrl);
+        if (typeof window !== "undefined") {
+            const newUrl = tab === "home" ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+        }
     }, []);
 
     const handleTripCreated = useCallback(() => {

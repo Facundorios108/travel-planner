@@ -166,8 +166,8 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-slate-50 dark:to-slate-950"></div>
 
                 {/* Top Nav Area */}
-                <div className="absolute top-0 left-0 right-0 px-6 pt-12 pb-4 flex justify-between items-start z-30 pointer-events-none">
-                    <button onClick={() => router.push("/")} className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition shadow-sm">
+                <div className="absolute top-0 left-0 right-0 px-4 pt-8 pb-4 flex justify-between items-start z-30 pointer-events-none">
+                    <button onClick={() => router.push("/")} className="pointer-events-auto w-11 h-11 flex items-center justify-center bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition shadow-sm">
                         <ChevronLeft size={24} />
                     </button>
                     <div className="flex flex-col items-end gap-2">
@@ -223,10 +223,10 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 </div>
 
                 {/* Bottom Title Area */}
-                <div className="absolute bottom-6 left-6 right-6 z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pointer-events-none">
+                <div className="absolute bottom-6 left-4 right-4 z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pointer-events-none">
                     <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100 drop-shadow-sm">{trip.name}</h1>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-lg">{trip.name}</h1>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setIsEditTripModalOpen(true)}

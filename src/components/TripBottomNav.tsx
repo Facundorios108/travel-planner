@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, FileText, Wallet, User } from "lucide-react";
+import { Map, FileText, Wallet } from "lucide-react";
 import { hapticFeedback } from "@/utils/haptics";
 
 interface TripBottomNavProps {
@@ -17,7 +17,6 @@ export default function TripBottomNav({ tripId }: TripBottomNavProps) {
         { id: "timeline", label: "Viaje", icon: Map, href: `/trip/${tripId}` },
         { id: "docs", label: "Docs", icon: FileText, href: `/trip/${tripId}/docs` },
         { id: "expenses", label: "Gastos", icon: Wallet, href: `/trip/${tripId}/expenses` },
-        { id: "profile", label: "Inicio", icon: User, href: `/` },
     ];
 
     return (
