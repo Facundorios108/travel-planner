@@ -4,13 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
 import { Trip } from "@/types/travel";
-import { CalendarDays, Wallet, User, Plus, Loader2, Bell, Wand2 } from "lucide-react";
+import { CalendarDays, Wallet, User, Plus, Loader2, Bell, Briefcase } from "lucide-react";
 import EmptyState from "./EmptyState";
 import TripList from "./TripList";
 import AddTrip from "./AddTrip";
 import { ThemeToggle } from "./ThemeToggle";
 import UserProfile from "./UserProfile";
-import AITripPlanner from "./AITripPlanner";
+import TravelTools from "./TravelTools";
 
 export default function Dashboard() {
     const { user, signOut } = useAuth();
@@ -166,7 +166,7 @@ export default function Dashboard() {
 
                 {activeTab === "ai" && (
                     <div className="px-6 pt-4 pb-12">
-                        <AITripPlanner />
+                        <TravelTools />
                     </div>
                 )}
 
@@ -218,8 +218,8 @@ export default function Dashboard() {
                         onClick={() => handleTabChange("ai")}
                         className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "ai" ? "text-indigo-500 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
                     >
-                        <Wand2 size={20} strokeWidth={activeTab === "ai" ? 2.5 : 2} />
-                        <span className="text-[9px] font-bold">IA Planner</span>
+                        <Briefcase size={20} strokeWidth={activeTab === "ai" ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold">Herramientas</span>
                         {activeTab === "ai" && <div className="w-1 h-1 bg-indigo-500 rounded-full mt-0.5"></div>}
                     </button>
 

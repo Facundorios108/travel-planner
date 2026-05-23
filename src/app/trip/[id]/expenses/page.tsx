@@ -7,7 +7,9 @@ import { Trip, Expense, ExpenseCategory } from "@/types/travel";
 import TripBottomNav from "@/components/TripBottomNav";
 import AddExpenseModal from "@/components/AddExpenseModal";
 import { format, startOfDay, eachDayOfInterval, isSameDay } from "date-fns";
-import { ArrowLeft, TrendingUp, Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, CreditCard, Filter, Plus, Loader2, PieChart as PieChartIcon, BarChart3 } from "lucide-react";
+import { ArrowLeft, TrendingUp, Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, CreditCard, Filter, Plus, Loader2, PieChart as PieChartIcon, BarChart3, Edit2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AuthScreen from "@/components/AuthScreen";
 import {
     ResponsiveContainer,
     PieChart,
@@ -26,6 +28,9 @@ export default function ExpensesPage() {
     const router = useRouter();
     const tripId = params.id as string;
 
+    const { user, loading: authLoading } = useAuth();
+    const [error, setError] = useState<string | null>(null);
+
     const [trip, setTrip] = useState<Trip | null>(null);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,21 +39,31 @@ export default function ExpensesPage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"list" | "analytics">("list");
 
+    // Budget Editor states
+    const [isEditingBudget, setIsEditingBudget] = useState(false);
+    const [tempBudget, setTempBudget] = useState("");
+
     useEffect(() => {
+        if (!user) return;
         const loadData = async () => {
             try {
                 const tripData = await travelService.getTrip(tripId);
                 setTrip(tripData);
                 const expensesData = await travelService.getTripExpenses(tripId);
                 setExpenses(expensesData);
-            } catch (error) {
-                console.error("Error loading expenses page data:", error);
+            } catch (err: any) {
+                console.error("Error loading expenses page data:", err);
+                if (err.message && (err.message.includes("permission") || err.message.includes("Permission"))) {
+                    setError("permission-denied");
+                } else {
+                    setError("general-error");
+                }
             } finally {
                 setIsLoading(false);
             }
         };
         loadData();
-    }, [tripId]);
+    }, [tripId, user]);
 
     const handleSaveExpense = async (data: any) => {
         try {
@@ -62,6 +77,23 @@ export default function ExpensesPage() {
         } catch (error) {
             console.error("Error saving expense:", error);
             window.alert("Error al guardar gasto.");
+        }
+    };
+
+    const handleSaveBudget = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const numVal = parseFloat(tempBudget);
+        if (isNaN(numVal) || numVal < 0) {
+            window.alert("Presupuesto inválido");
+            return;
+        }
+        try {
+            await travelService.updateTrip(tripId, { budget: numVal });
+            setTrip(prev => prev ? { ...prev, budget: numVal } : null);
+            setIsEditingBudget(false);
+        } catch (err) {
+            console.error("Failed to save budget", err);
+            window.alert("Error al guardar el presupuesto.");
         }
     };
 
@@ -109,6 +141,31 @@ export default function ExpensesPage() {
         return { categoryData, dailyData };
     }, [expenses]);
 
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#f8f9fc] dark:bg-slate-950">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <AuthScreen />;
+    }
+
+    if (error === "permission-denied") {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-950">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <AlertTriangle size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Acceso Denegado</h2>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6">No tienes permisos para ver las finanzas de este viaje.</p>
+                <button onClick={() => router.push("/")} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg">Volver al Inicio</button>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#f8f9fc] dark:bg-slate-950">
@@ -136,10 +193,16 @@ export default function ExpensesPage() {
         }
     };
 
+    // Meta Calculations
+    const budgetLimit = trip.budget || 2500;
+    const percent = budgetLimit > 0 ? Math.round((totalAmount / budgetLimit) * 100) : 0;
+    const vsMetaText = percent > 100 ? `${percent - 100}% sobre meta` : `${100 - percent}% bajo meta`;
+    const vsMetaColor = percent > 100 ? "bg-rose-500/10 text-rose-600 border border-rose-200" : "bg-green-500/10 text-green-600 border border-green-200";
+
     return (
         <div className="bg-[#f8f9fc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans">
             <header className="sticky top-0 z-20 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md px-6 pt-6 pb-4 flex items-center justify-between">
-                <button onClick={() => router.back()} className="w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+                <button onClick={() => router.push(`/trip/${tripId}`)} className="w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
                     <ArrowLeft size={24} className="text-slate-900 dark:text-slate-100" />
                 </button>
                 <h1 className="text-2xl font-bold tracking-tight">Expenses</h1>
@@ -187,12 +250,36 @@ export default function ExpensesPage() {
                             <h2 className="text-[2.5rem] leading-none font-black text-slate-900 dark:text-white tracking-tight">{formatMoney(totalAmount)}</h2>
                             <span className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase">USD</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs font-medium">
-                            <div className="flex items-center gap-1 bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full">
-                                <TrendingUp size={12} />
-                                <span>8% vs meta</span>
+                        <div className="flex items-center gap-4 text-xs font-medium flex-wrap">
+                            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${vsMetaColor}`}>
+                                <TrendingUp size={11} />
+                                <span>{vsMetaText}</span>
                             </div>
-                            <span className="text-slate-500 dark:text-slate-400">Presupuesto: $2,500</span>
+                            
+                            {/* Editable Budget Form or Display */}
+                            {isEditingBudget ? (
+                                <form onSubmit={handleSaveBudget} className="flex items-center gap-1.5 animate-in fade-in duration-200">
+                                    <input
+                                        type="number"
+                                        value={tempBudget}
+                                        onChange={(e) => setTempBudget(e.target.value)}
+                                        className="w-20 px-2 py-1 bg-white dark:bg-slate-900 border border-blue-400 rounded-lg text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        autoFocus
+                                        min="0"
+                                        step="any"
+                                    />
+                                    <button type="submit" className="text-xs bg-blue-500 hover:bg-blue-600 text-white font-bold px-2 py-1 rounded-lg transition">OK</button>
+                                    <button type="button" onClick={() => setIsEditingBudget(false)} className="text-xs bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-700 font-bold px-2 py-1 rounded-lg transition">✕</button>
+                                </form>
+                            ) : (
+                                <div 
+                                    onClick={() => { setTempBudget(budgetLimit.toString()); setIsEditingBudget(true); }}
+                                    className="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors cursor-pointer group bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full"
+                                >
+                                    <span>Presupuesto: {formatMoney(budgetLimit)}</span>
+                                    <Edit2 size={11} className="text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -214,98 +301,117 @@ export default function ExpensesPage() {
                 </div>
 
                 {activeTab === "analytics" ? (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Category Chart */}
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 [&_svg]:outline-none [&_*]:outline-none">
-                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                                <PieChartIcon size={20} className="text-blue-500" /> Distribución por Categoría
-                            </h3>
-                            <div className="h-[250px] w-full min-h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={analyticsData.categoryData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={8}
-                                            dataKey="value"
-                                            animationBegin={0}
-                                            animationDuration={1500}
-                                        >
-                                            {analyticsData.categoryData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip 
-                                            contentStyle={{ 
-                                                borderRadius: '16px', 
-                                                border: 'none', 
-                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                color: '#1e293b'
-                                            }}
-                                            itemStyle={{ color: '#1e293b' }}
-                                            formatter={(value: any) => [formatMoney(Number(value) || 0), "Monto"]}
-                                        />
-                                        <Legend 
-                                            verticalAlign="bottom" 
-                                            height={36}
-                                            iconType="circle"
-                                            wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                    expenses.length === 0 ? (
+                        /* Beautiful empty state inside Analysis tab */
+                        <div className="flex flex-col items-center justify-center text-center py-16 px-6 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 animate-in fade-in duration-500">
+                            <div className="w-20 h-20 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-5 text-blue-500 shadow-inner">
+                                <BarChart3 size={36} strokeWidth={1.5} />
                             </div>
+                            <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">Sin Datos para Analizar</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[280px] leading-relaxed mb-6">
+                                Carga tus primeros gastos en la pestaña "Transacciones" para ver el análisis de tu presupuesto, gráficos y tendencias.
+                            </p>
+                            <button
+                                onClick={() => setActiveTab("list")}
+                                className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white font-bold py-3.5 px-8 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 text-xs uppercase tracking-wider"
+                            >
+                                Ir a Transacciones
+                            </button>
                         </div>
+                    ) : (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* Category Chart */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 [&_svg]:outline-none [&_*]:outline-none">
+                                <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                    <PieChartIcon size={20} className="text-blue-500" /> Distribución por Categoría
+                                </h3>
+                                <div className="h-[250px] w-full min-h-[250px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={analyticsData.categoryData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={8}
+                                                dataKey="value"
+                                                animationBegin={0}
+                                                animationDuration={1500}
+                                            >
+                                                {analyticsData.categoryData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip 
+                                                contentStyle={{ 
+                                                    borderRadius: '16px', 
+                                                    border: 'none', 
+                                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                    color: '#1e293b'
+                                                }}
+                                                itemStyle={{ color: '#1e293b' }}
+                                                formatter={(value: any) => [formatMoney(Number(value) || 0), "Monto"]}
+                                            />
+                                            <Legend 
+                                                verticalAlign="bottom" 
+                                                height={36}
+                                                iconType="circle"
+                                                wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
 
-                        {/* Daily Trend Chart */}
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 [&_svg]:outline-none [&_*]:outline-none">
-                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                                <BarChart3 size={20} className="text-blue-500" /> Gastos Diarios
-                            </h3>
-                            <div className="h-[250px] w-full min-h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={analyticsData.dailyData}>
-                                        <defs>
-                                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
-                                                <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis 
-                                            dataKey="name" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fontSize: 10, fill: '#64748b' }}
-                                            dy={10}
-                                        />
-                                        <YAxis hide />
-                                        <Tooltip 
-                                            cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
-                                            contentStyle={{ 
-                                                borderRadius: '16px', 
-                                                border: 'none', 
-                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                color: '#1e293b'
-                                            }}
-                                            itemStyle={{ color: '#1e293b' }}
-                                            formatter={(value: any) => [formatMoney(Number(value) || 0), "Monto"]}
-                                        />
-                                        <Bar 
-                                            dataKey="amount" 
-                                            fill="url(#barGradient)" 
-                                            radius={[6, 6, 6, 6]} 
-                                            barSize={Math.max(12, 100 / (analyticsData.dailyData.length || 1))}
-                                            animationDuration={1500}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                            {/* Daily Trend Chart */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 [&_svg]:outline-none [&_*]:outline-none">
+                                <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                    <BarChart3 size={20} className="text-blue-500" /> Gastos Diarios
+                                </h3>
+                                <div className="h-[250px] w-full min-h-[250px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analyticsData.dailyData}>
+                                            <defs>
+                                                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+                                                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <XAxis 
+                                                dataKey="name" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                                dy={10}
+                                            />
+                                            <YAxis hide />
+                                            <Tooltip 
+                                                cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+                                                contentStyle={{ 
+                                                    borderRadius: '16px', 
+                                                    border: 'none', 
+                                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                    color: '#1e293b'
+                                                }}
+                                                itemStyle={{ color: '#1e293b' }}
+                                                formatter={(value: any) => [formatMoney(Number(value) || 0), "Monto"]}
+                                            />
+                                            <Bar 
+                                                dataKey="amount" 
+                                                fill="url(#barGradient)" 
+                                                radius={[6, 6, 6, 6]} 
+                                                barSize={Math.max(12, 100 / (analyticsData.dailyData.length || 1))}
+                                                animationDuration={1500}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )
                 ) : (
                     <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center mb-6">

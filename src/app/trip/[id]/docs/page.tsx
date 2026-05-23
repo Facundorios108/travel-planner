@@ -5,15 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import { travelService } from "@/lib/services";
 import { Trip, TripDocument, DocumentType } from "@/types/travel";
 import TripBottomNav from "@/components/TripBottomNav";
-import { ArrowLeft, Search, Ticket, Bed, IdCard, Train, Car, ChevronRight, Plus, FileText, Trash2, Loader2, X } from "lucide-react";
+import { ArrowLeft, Search, Ticket, Bed, IdCard, Train, Car, ChevronRight, Plus, FileText, Trash2, Loader2, X, AlertTriangle } from "lucide-react";
 import { AddDocumentModal } from "@/components/AddDocumentModal";
 import { getDocumentFromCache, deleteDocumentFromCache } from "@/utils/documentCache";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/context/AuthContext";
+import AuthScreen from "@/components/AuthScreen";
 
 export default function DocumentsPage() {
     const params = useParams();
     const router = useRouter();
     const tripId = params.id as string;
+
+    const { user, loading: authLoading } = useAuth();
+    const [error, setError] = useState<string | null>(null);
 
     const [trip, setTrip] = useState<Trip | null>(null);
     const [documents, setDocuments] = useState<TripDocument[]>([]);
@@ -22,6 +27,7 @@ export default function DocumentsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
     
     // ConfirmDialog state
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -32,6 +38,7 @@ export default function DocumentsPage() {
     }>({ isOpen: false, message: "", onConfirm: () => {} });
 
     useEffect(() => {
+        if (!user) return;
         const loadDocs = async () => {
             try {
                 const [tripData, docsData] = await Promise.all([
@@ -40,14 +47,19 @@ export default function DocumentsPage() {
                 ]);
                 setTrip(tripData);
                 setDocuments(docsData);
-            } catch (error) {
-                console.error("Error loading docs:", error);
+            } catch (err: any) {
+                console.error("Error loading docs:", err);
+                if (err.message && (err.message.includes("permission") || err.message.includes("Permission"))) {
+                    setError("permission-denied");
+                } else {
+                    setError("general-error");
+                }
             } finally {
                 setIsLoading(false);
             }
         };
         loadDocs();
-    }, [tripId]);
+    }, [tripId, user]);
 
     const filters = ['Todos', 'Ticket', 'Hotel', 'ID/Pasaporte', 'Tren/Bus', 'Auto', 'Otro'];
 
@@ -109,7 +121,7 @@ export default function DocumentsPage() {
                 }
                 const blob = new Blob([u8arr], { type: mime });
                 const blobUrl = URL.createObjectURL(blob);
-                window.open(blobUrl, "_blank");
+                setSelectedPdf(blobUrl);
             } else {
                 window.open(finalUrl, "_blank");
             }
@@ -127,6 +139,31 @@ export default function DocumentsPage() {
         const id = await travelService.addDocument({ ...cleanData, tripId } as Omit<TripDocument, "id">);
         setDocuments([{ ...(cleanData as unknown as TripDocument), id, tripId, createdAt: new Date() }, ...documents]);
     };
+
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#f8f9fc] dark:bg-slate-950">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <AuthScreen />;
+    }
+
+    if (error === "permission-denied") {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-950">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <AlertTriangle size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Acceso Denegado</h2>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6">No tienes permisos para ver los documentos de este viaje.</p>
+                <button onClick={() => router.push("/")} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg">Volver al Inicio</button>
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (
@@ -162,7 +199,7 @@ export default function DocumentsPage() {
         <div className="bg-[#f8f9fc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans">
             {/* Header */}
             <header className="sticky top-0 z-10 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md px-6 pt-6 pb-4 flex items-center justify-between">
-                <button onClick={() => router.back()} className="w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 transition-active active:scale-95">
+                <button onClick={() => router.push(`/trip/${tripId}`)} className="w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 transition-active active:scale-95 animate-in fade-in duration-200">
                     <ArrowLeft size={24} className="text-slate-900 dark:text-slate-100" />
                 </button>
                 <h1 className="text-xl font-bold tracking-tight">Mis Documentos</h1>
@@ -301,6 +338,31 @@ export default function DocumentsPage() {
                         className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" 
                         onClick={(e) => e.stopPropagation()}
                     />
+                </div>
+            )}
+
+            {/* Document PDF Viewer Modal */}
+            {selectedPdf && (
+                <div 
+                    className="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-sm flex flex-col p-4 animate-in fade-in" 
+                    onClick={() => setSelectedPdf(null)}
+                >
+                    <div className="flex justify-between items-center pb-4 text-white max-w-lg mx-auto w-full">
+                        <h3 className="text-base font-extrabold truncate">Visualizar Documento PDF</h3>
+                        <button
+                            onClick={() => setSelectedPdf(null)}
+                            className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors shrink-0 ml-2"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="flex-1 bg-white rounded-3xl overflow-hidden shadow-2xl relative max-w-lg mx-auto w-full h-full" onClick={(e) => e.stopPropagation()}>
+                        <iframe 
+                            src={selectedPdf} 
+                            className="w-full h-full border-none"
+                            title="Visor de PDF"
+                        />
+                    </div>
                 </div>
             )}
 

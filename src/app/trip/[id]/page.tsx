@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, use, useTransition, startTransition } from "react";
-import { ChevronLeft, CalendarDays, Clock, Plus, Loader2, PlaneLanding, Hotel, Car, MapPin, Activity as ActivityIcon, MoreHorizontal, Trash2, Edit2, PlusCircle } from "lucide-react";
+import { useEffect, useState, use, useTransition } from "react";
+import { ChevronLeft, CalendarDays, Clock, Plus, Loader2, PlaneLanding, Hotel, Car, MapPin, Activity as ActivityIcon, MoreHorizontal, Trash2 as TrashIcon, Trash2, Edit2, PlusCircle, AlertTriangle, Users } from "lucide-react";
 import { travelService } from "@/lib/services";
 import { Trip, Destination, Activity, ActivityType } from "@/types/travel";
 import { format } from "date-fns";
@@ -13,10 +13,12 @@ import { EditTripModal } from "@/components/EditTripModal";
 import TripBottomNav from "@/components/TripBottomNav";
 import { ShareTripModal } from "@/components/ShareTripModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Trash2 as TrashIcon, AlertTriangle, Users } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AuthScreen from "@/components/AuthScreen";
 
 export default function TripItinerary({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
+    const { user, loading: authLoading } = useAuth();
     const [isPending, startTransition] = useTransition();
 
     // Unwrap the generic params object
@@ -27,12 +29,14 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
     const [destinations, setDestinations] = useState<Destination[]>([]);
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [view, setView] = useState<"timeline" | "calendar">("timeline"); // Switcher from Stitch
 
     // Modal & View state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+    const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
     const [isAddDestinationModalOpen, setIsAddDestinationModalOpen] = useState(false);
     const [isEditTripModalOpen, setIsEditTripModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -54,6 +58,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
         let mounted = true;
         
         async function loadData() {
+            if (!user) return; // Wait for user to be authenticated
             try {
                 // Load data in parallel with cache support
                 const [tripData, destinationsData, activitiesData] = await Promise.all([
@@ -67,8 +72,13 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 setTrip(tripData);
                 setDestinations(destinationsData);
                 setActivities(activitiesData);
-            } catch (error) {
-                console.error("Failed to load itinerary:", error);
+            } catch (err: any) {
+                console.error("Failed to load itinerary:", err);
+                if (err.message && (err.message.includes("permission") || err.message.includes("Permission"))) {
+                    setError("permission-denied");
+                } else {
+                    setError("general-error");
+                }
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -79,11 +89,36 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
         return () => {
             mounted = false;
         };
-    }, [tripId]);
+    }, [tripId, user]);
+
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <AuthScreen />;
+    }
+
+    if (error === "permission-denied") {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-950">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <AlertTriangle size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Acceso Denegado</h2>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6">No tienes permisos para ver este viaje. Pídele al creador que te invite como colaborador.</p>
+                <button onClick={() => router.push("/")} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg">Volver al Inicio</button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
         );
@@ -139,22 +174,54 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
         setIsModalOpen(true);
     };
 
-    const handleSaveDestination = async (data: Omit<Destination, "id" | "order">) => {
-        const order = destinations.length;
-        const id = await travelService.addDestination(
-            data.tripId,
-            data.country,
-            data.city,
-            data.startDate,
-            data.endDate,
-            order
-        );
-        const newDestinations = [...destinations, { ...data, order, id }].sort((a, b) => {
-            const timeA = a.startDate ? a.startDate.getTime() : 0;
-            const timeB = b.startDate ? b.startDate.getTime() : 0;
-            return timeA - timeB;
+    const handleSaveDestination = async (data: Omit<Destination, "id" | "order"> & { id?: string }) => {
+        if (data.id) {
+            await travelService.updateDestination(data.id, tripId, data);
+            const updated = destinations.map(d => d.id === data.id ? { ...d, ...data } : d).sort((a, b) => {
+                const timeA = a.startDate ? new Date(a.startDate).getTime() : 0;
+                const timeB = b.startDate ? new Date(b.startDate).getTime() : 0;
+                return timeA - timeB;
+            });
+            setDestinations(updated);
+        } else {
+            const order = destinations.length;
+            const id = await travelService.addDestination(
+                data.tripId,
+                data.country,
+                data.city,
+                data.startDate,
+                data.endDate,
+                order
+            );
+            const newDestinations = [...destinations, { ...data, order, id }].sort((a, b) => {
+                const timeA = a.startDate ? new Date(a.startDate).getTime() : 0;
+                const timeB = b.startDate ? new Date(b.startDate).getTime() : 0;
+                return timeA - timeB;
+            });
+            setDestinations(newDestinations);
+        }
+    };
+
+    const handleDeleteDestination = async (destId: string, destCity: string) => {
+        if (destinations.length <= 1) {
+            window.alert("No puedes eliminar el único destino de tu viaje.");
+            return;
+        }
+        setConfirmDialog({
+            isOpen: true,
+            title: "Eliminar destino",
+            message: `¿Estás seguro de que deseas eliminar "${destCity}" y todas sus actividades asociadas?`,
+            onConfirm: async () => {
+                await travelService.deleteDestination(destId, tripId);
+                setDestinations(destinations.filter(d => d.id !== destId));
+                setActivities(activities.filter(a => a.destinationId !== destId));
+            }
         });
-        setDestinations(newDestinations);
+    };
+
+    const handleEditDestination = (dest: Destination) => {
+        setEditingDestination(dest);
+        setIsAddDestinationModalOpen(true);
     };
 
     const confirmDeleteTrip = async () => {
@@ -317,6 +384,24 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                         Destino {i + 1}
                                     </div>
                                     <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 truncate">{dest.city}</h3>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                            onClick={() => handleEditDestination(dest)}
+                                            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                                            title="Editar destino"
+                                        >
+                                            <Edit2 size={14} />
+                                        </button>
+                                        {destinations.length > 1 && (
+                                            <button
+                                                onClick={() => handleDeleteDestination(dest.id, dest.city)}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                                                title="Eliminar destino"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="h-[2px] flex-1 bg-gradient-to-r from-slate-300 to-transparent dark:from-slate-700"></div>
                                 </div>
 
@@ -393,7 +478,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                         {/* Add Destination Button at the end of Timeline */}
                         <div className="mt-10 flex justify-center">
                             <button
-                                onClick={() => setIsAddDestinationModalOpen(true)}
+                                onClick={() => { setEditingDestination(null); setIsAddDestinationModalOpen(true); }}
                                 className="flex items-center gap-2 px-7 py-3.5 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold rounded-full shadow-lg border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
                             >
                                 <PlusCircle size={20} />
@@ -547,6 +632,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 onClose={() => setIsAddDestinationModalOpen(false)}
                 onSave={handleSaveDestination}
                 tripId={tripId}
+                editingDestination={editingDestination}
             />
 
             {/* Edit Trip Details Modal */}

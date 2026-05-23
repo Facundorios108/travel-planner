@@ -9,6 +9,7 @@ export interface Trip {
     collaborators?: string[]; // Array of user IDs who can access this trip
     description?: string;
     destination?: string;
+    budget?: number;
 }
 
 export interface UserSettings {

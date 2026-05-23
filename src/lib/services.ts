@@ -279,6 +279,27 @@ export const travelService = {
         return destinations;
     },
 
+    async deleteDestination(destId: string, tripId: string): Promise<void> {
+        const docRef = doc(db, "destinations", destId);
+        await deleteDoc(docRef);
+        
+        // Invalidate caches
+        dataCache.invalidate(cacheKeys.tripDestinations(tripId));
+        dataCache.invalidate(cacheKeys.trip(tripId));
+    },
+
+    async updateDestination(destId: string, tripId: string, data: Partial<Destination>): Promise<void> {
+        const docRef = doc(db, "destinations", destId);
+        const payload = Object.fromEntries(
+            Object.entries(data).filter(([_, v]) => v !== undefined)
+        );
+        await updateDoc(docRef, payload);
+        
+        // Invalidate caches
+        dataCache.invalidate(cacheKeys.tripDestinations(tripId));
+        dataCache.invalidate(cacheKeys.trip(tripId));
+    },
+
     // Activities
     async addActivity(data: Omit<Activity, "id">): Promise<string> {
         const docRef = await addDoc(collection(db, "activities"), data);

@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import LocationSearch from "./LocationSearch";
 import { Destination } from "@/types/travel";
+import { format } from "date-fns";
 
 interface AddDestinationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: Omit<Destination, "id" | "order">) => Promise<void>;
+    onSave: (data: Omit<Destination, "id" | "order"> & { id?: string }) => Promise<void>;
     tripId: string;
+    editingDestination?: Destination | null;
 }
 
-export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDestinationModalProps) {
+export function AddDestinationModal({ isOpen, onClose, onSave, tripId, editingDestination }: AddDestinationModalProps) {
     const [city, setCity] = useState("");
     const [country, setCountry] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -18,16 +20,23 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState("");
 
-    // Reset when modal opens
+    // Reset or load when modal opens/changes
     useEffect(() => {
         if (isOpen) {
-            setCity("");
-            setCountry("");
-            setStartDate("");
-            setEndDate("");
+            if (editingDestination) {
+                setCity(editingDestination.city);
+                setCountry(editingDestination.country);
+                setStartDate(editingDestination.startDate ? format(new Date(editingDestination.startDate), "yyyy-MM-dd") : "");
+                setEndDate(editingDestination.endDate ? format(new Date(editingDestination.endDate), "yyyy-MM-dd") : "");
+            } else {
+                setCity("");
+                setCountry("");
+                setStartDate("");
+                setEndDate("");
+            }
             setError("");
         }
-    }, [isOpen]);
+    }, [isOpen, editingDestination]);
 
     if (!isOpen) return null;
 
@@ -48,6 +57,7 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
         setIsSaving(true);
         try {
             await onSave({
+                id: editingDestination?.id,
                 tripId,
                 city,
                 country,
@@ -67,7 +77,7 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                        Añadir Nuevo Destino
+                        {editingDestination ? "Editar Destino" : "Añadir Nuevo Destino"}
                     </h2>
                     <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
                         <X size={20} />
@@ -134,7 +144,7 @@ export function AddDestinationModal({ isOpen, onClose, onSave, tripId }: AddDest
                         disabled={isSaving}
                         className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition disabled:opacity-50"
                     >
-                        {isSaving ? "Guardando..." : "Guardar Destino"}
+                        {isSaving ? "Guardando..." : editingDestination ? "Guardar Cambios" : "Guardar Destino"}
                     </button>
                 </div>
             </div>
