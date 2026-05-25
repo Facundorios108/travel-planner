@@ -10,6 +10,7 @@ import { format, startOfDay, eachDayOfInterval, isSameDay } from "date-fns";
 import { ArrowLeft, TrendingUp, Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, CreditCard, Filter, Plus, Loader2, PieChart as PieChartIcon, BarChart3, Edit2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AuthScreen from "@/components/AuthScreen";
+import { useToast } from "@/components/Toast";
 import {
     ResponsiveContainer,
     PieChart,
@@ -27,6 +28,7 @@ export default function ExpensesPage() {
     const params = useParams();
     const router = useRouter();
     const tripId = params.id as string;
+    const { showToast, ToastComponent } = useToast();
 
     const { user, loading: authLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
@@ -67,33 +69,32 @@ export default function ExpensesPage() {
 
     const handleSaveExpense = async (data: any) => {
         try {
-            const expId = await travelService.addExpense({
-                ...data,
-                tripId
-            });
-            const newExp = { id: expId, ...data, tripId, createdAt: new Date() } as Expense;
-            setExpenses([newExp, ...expenses].sort((a, b) => b.date.getTime() - a.date.getTime()));
+            const expenseData = { ...data, tripId };
+            const id = await travelService.addExpense(expenseData);
+            setExpenses([...expenses, { ...expenseData, id }]);
             setIsAddExpenseModalOpen(false);
-        } catch (error) {
-            console.error("Error saving expense:", error);
-            window.alert("Error al guardar gasto.");
+            showToast("Gasto guardado correctamente.", "success");
+        } catch (err) {
+            console.error("Error saving expense:", err);
+            showToast("Error al guardar gasto.", "error");
         }
     };
 
-    const handleSaveBudget = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const numVal = parseFloat(tempBudget);
-        if (isNaN(numVal) || numVal < 0) {
-            window.alert("Presupuesto inválido");
+    const handleSaveBudget = async () => {
+        const parsedBudget = parseFloat(tempBudget);
+        if (isNaN(parsedBudget) || parsedBudget < 0) {
+            showToast("Presupuesto inválido", "warning");
             return;
         }
+
         try {
-            await travelService.updateTrip(tripId, { budget: numVal });
-            setTrip(prev => prev ? { ...prev, budget: numVal } : null);
+            await travelService.updateTrip(tripId, { budget: parsedBudget });
+            setTrip((prev) => prev ? { ...prev, budget: parsedBudget } : null);
             setIsEditingBudget(false);
+            showToast("Presupuesto guardado correctamente.", "success");
         } catch (err) {
-            console.error("Failed to save budget", err);
-            window.alert("Error al guardar el presupuesto.");
+            console.error("Error saving budget:", err);
+            showToast("Error al guardar el presupuesto.", "error");
         }
     };
 
@@ -201,6 +202,7 @@ export default function ExpensesPage() {
 
     return (
         <div className="bg-[#f8f9fc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans">
+            {ToastComponent}
             <header className="sticky top-0 z-20 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md px-6 pt-6 pb-4 flex items-center justify-between">
                 <button onClick={() => router.push(`/trip/${tripId}`)} className="w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
                     <ArrowLeft size={24} className="text-slate-900 dark:text-slate-100" />

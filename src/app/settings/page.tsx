@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
 import { UserSettings } from "@/types/travel";
 import { useTheme } from "next-themes";
+import { useToast } from "@/components/Toast";
 import {
     ChevronLeft,
     Moon,
@@ -23,6 +24,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const { user, signOut } = useAuth();
     const { theme, setTheme } = useTheme();
+    const { showToast, ToastComponent } = useToast();
 
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [loading, setLoading] = useState(true);
@@ -78,9 +80,10 @@ export default function SettingsPage() {
         try {
             await travelService.updateUserSettings(user.uid, settings);
             setUnsavedChanges(false);
+            showToast("Ajustes guardados correctamente.", "success");
         } catch (error) {
             console.error("Error saving settings:", error);
-            window.alert("Error al guardar los ajustes.");
+            showToast("Error al guardar los ajustes.", "error");
         } finally {
             setSaving(false);
         }
@@ -96,6 +99,7 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-20">
+            {ToastComponent}
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">

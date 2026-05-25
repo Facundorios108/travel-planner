@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "./Toast";
 import { ArrowLeft, PlusCircle, Trash2, Loader2, Calendar, MapPin, PlaneTakeoff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
@@ -17,6 +18,7 @@ interface DestinationInput {
 
 export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void, onTripCreated: () => void }) {
     const { user } = useAuth();
+    const { showToast, ToastComponent } = useToast();
     const [loading, setLoading] = useState(false);
     const [tripName, setTripName] = useState("");
 
@@ -61,18 +63,18 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
         // Validación básica
         for (const dest of destinations) {
             if (!dest.city || !dest.country) {
-                window.alert("Por favor, completa ciudad y país para todos los destinos.");
+                showToast("Por favor, completa ciudad y país para todos los destinos.", "warning");
                 return;
             }
             if (!dest.startDate || !dest.endDate) {
-                window.alert("Por favor, ingresa las fechas para todos los destinos.");
+                showToast("Por favor, ingresa las fechas para todos los destinos.", "warning");
                 return;
             }
             // Parsear fechas en zona horaria local para validación
             const startLocal = new Date(dest.startDate + 'T00:00:00');
             const endLocal = new Date(dest.endDate + 'T00:00:00');
             if (endLocal < startLocal) {
-                window.alert(`La fecha de salida en ${dest.city} debe ser después de la llegada.`);
+                showToast(`La fecha de salida en ${dest.city} debe ser después de la llegada.`, "warning");
                 return;
             }
         }
@@ -110,7 +112,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
             onTripCreated();
         } catch (error) {
             console.error("Error saving trip:", error);
-            window.alert("Error al guardar el viaje. Intenta de nuevo.");
+            showToast("Error al guardar el viaje. Intenta de nuevo.", "error");
         } finally {
             setLoading(false);
         }
@@ -133,6 +135,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
 
     return (
         <div className="relative flex min-h-screen w-full flex-col max-w-[480px] mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+            {ToastComponent}
             {/* Custom Styles for Timeline Line */}
             <style jsx>{`
                 .itinerary-line {

@@ -166,7 +166,7 @@ export default function Dashboard() {
 
                 {activeTab === "ai" && (
                     <div className="px-6 pt-4 pb-12">
-                        <TravelTools />
+                        <TravelTools trips={trips} />
                     </div>
                 )}
 

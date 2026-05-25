@@ -9,6 +9,7 @@ import { ArrowLeft, Search, Ticket, Bed, IdCard, Train, Car, ChevronRight, Plus,
 import { AddDocumentModal } from "@/components/AddDocumentModal";
 import { getDocumentFromCache, deleteDocumentFromCache } from "@/utils/documentCache";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useAuth } from "@/context/AuthContext";
 import AuthScreen from "@/components/AuthScreen";
 
@@ -16,6 +17,7 @@ export default function DocumentsPage() {
     const params = useParams();
     const router = useRouter();
     const tripId = params.id as string;
+    const { showToast, ToastComponent } = useToast();
 
     const { user, loading: authLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
@@ -87,9 +89,10 @@ export default function DocumentsPage() {
                         await deleteDocumentFromCache(docItem.url);
                     }
                     setDocuments(documents.filter(d => d.id !== docItem.id));
+                    showToast("Documento eliminado correctamente.", "success");
                 } catch (err) {
                     console.error("Error deleting doc", err);
-                    window.alert("Error al eliminar el documento.");
+                    showToast("Error al eliminar el documento.", "error");
                 }
             }
         });
@@ -103,7 +106,7 @@ export default function DocumentsPage() {
                 if (cachedData) {
                     finalUrl = cachedData;
                 } else {
-                    window.alert("Éste archivo no está disponible sin conexión en este dispositivo.");
+                    showToast("Éste archivo no está disponible sin conexión en este dispositivo.", "warning");
                     return;
                 }
             }
@@ -127,7 +130,7 @@ export default function DocumentsPage() {
             }
         } catch (error) {
             console.error("Error opening document", error);
-            window.alert("Error al abrir el documento.");
+            showToast("Error al abrir el documento.", "error");
         }
     };
 
@@ -197,6 +200,7 @@ export default function DocumentsPage() {
 
     return (
         <div className="bg-[#f8f9fc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans">
+            {ToastComponent}
             {/* Header */}
             <header className="sticky top-0 z-10 bg-[#f8f9fc]/80 dark:bg-slate-950/80 backdrop-blur-md px-6 pt-6 pb-4 flex items-center justify-between">
                 <button onClick={() => router.push(`/trip/${tripId}`)} className="w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 transition-active active:scale-95 animate-in fade-in duration-200">

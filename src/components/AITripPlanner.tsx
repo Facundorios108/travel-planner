@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useToast } from "./Toast";
 import { MapPin, Calendar, Wallet, Send, ChevronRight, Loader2, Save, Wand2, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
@@ -30,6 +31,7 @@ interface AIResponse {
 
 export default function AITripPlanner() {
   const { user } = useAuth();
+  const { showToast, ToastComponent } = useToast();
   const router = useRouter();
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -61,7 +63,7 @@ export default function AITripPlanner() {
       setResult(data);
     } catch (error) {
       console.error("AI Generation failed:", error);
-      window.alert("Error al generar tu viaje. Intenta de nuevo.");
+      showToast("Error al generar tu viaje. Intenta de nuevo.", "error");
     } finally {
       setLoading(false);
     }
@@ -113,7 +115,7 @@ export default function AITripPlanner() {
       }, 1500);
     } catch (error) {
       console.error("Error saving trip:", error);
-      window.alert("Error al guardar el viaje. Intenta de nuevo.");
+      showToast("Error al guardar el viaje. Intenta de nuevo.", "error");
     } finally {
       setSaving(false);
     }
@@ -121,6 +123,7 @@ export default function AITripPlanner() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 px-2">
+      {ToastComponent}
       <div className="text-center space-y-3 mb-10">
         <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
           <Wand2 size={28} className="text-white" />

@@ -13,6 +13,7 @@ import { EditTripModal } from "@/components/EditTripModal";
 import TripBottomNav from "@/components/TripBottomNav";
 import { ShareTripModal } from "@/components/ShareTripModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useAuth } from "@/context/AuthContext";
 import AuthScreen from "@/components/AuthScreen";
 
@@ -20,6 +21,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
     const [isPending, startTransition] = useTransition();
+    const { showToast, ToastComponent } = useToast();
 
     // Unwrap the generic params object
     const resolvedParams = use(params);
@@ -204,7 +206,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
 
     const handleDeleteDestination = async (destId: string, destCity: string) => {
         if (destinations.length <= 1) {
-            window.alert("No puedes eliminar el único destino de tu viaje.");
+            showToast("No puedes eliminar el único destino de tu viaje.", "warning");
             return;
         }
         setConfirmDialog({
@@ -231,7 +233,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             router.push("/");
         } catch (err) {
             console.error("Error deleting trip:", err);
-            window.alert("Error al eliminar el viaje.");
+            showToast("Error al eliminar el viaje.", "error");
             setIsDeleting(false);
             setIsDeleteModalOpen(false);
         }
@@ -249,6 +251,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 relative pb-24 text-slate-900 dark:text-slate-100">
+            {ToastComponent}
             {/* Header Itinerario - Hero Image Style - SIMPLIFICADO */}
             <header className="relative h-72 sm:h-80 w-full overflow-hidden shrink-0">
                 <div
@@ -319,9 +322,10 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                             try {
                                                 await travelService.updateTrip(trip.id, { coverImage: base64String });
                                                 setTrip((prev) => prev ? { ...prev, coverImage: base64String } : null);
+                                                showToast("Imagen de portada actualizada.", "success");
                                             } catch (err) {
                                                 console.error("Failed to upload image:", err);
-                                                window.alert("No se pudo guardar la imagen. Intenta con una foto más liviana.");
+                                                showToast("No se pudo guardar la imagen. Intenta con una foto más liviana.", "error");
                                             } finally {
                                                 setIsUploadingImage(false);
                                             }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useToast } from "./Toast";
 import { X, FileText, Ticket, Bed, IdCard, Train, Car, Link as LinkIcon, Upload } from "lucide-react";
 import { DocumentType } from "@/types/travel";
 import { saveDocumentToCache } from "@/utils/documentCache";
@@ -12,6 +13,7 @@ interface AddDocumentModalProps {
 }
 
 export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalProps) {
+    const { showToast, ToastComponent } = useToast();
     const [title, setTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");
     const [type, setType] = useState<DocumentType>("ticket");
@@ -38,7 +40,7 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
             onClose();
         } catch (error) {
             console.error("Error saving document:", error);
-            window.alert("No se pudo guardar el documento. Verifica tu conexión.");
+            showToast("No se pudo guardar el documento. Verificá tu conexión.", "error");
         } finally {
             setIsSaving(false);
         }
@@ -55,6 +57,7 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+            {ToastComponent}
             <div
                 className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:fade-in duration-300"
                 onClick={(e) => e.stopPropagation()}
@@ -147,7 +150,7 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
 
                                         // Validar tamaño máximo (ej. 5MB)
                                         if (file.size > 5 * 1024 * 1024) {
-                                            window.alert("Archivo muy grande. Máximo 5MB.");
+                                            showToast("Archivo muy grande. Máximo 5MB.", "warning");
                                             return;
                                         }
 

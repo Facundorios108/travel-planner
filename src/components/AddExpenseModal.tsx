@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useToast } from "./Toast";
 import { format } from "date-fns";
 import { ExpenseCategory } from "@/types/travel";
 import { Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, MoreHorizontal, X } from "lucide-react";
@@ -11,6 +12,7 @@ interface AddExpenseModalProps {
 }
 
 export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProps) {
+    const { showToast, ToastComponent } = useToast();
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
     const [currency, setCurrency] = useState("USD");
@@ -32,7 +34,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
         e.preventDefault();
 
         if (!title || !amount || isNaN(Number(amount))) {
-            window.alert("Por favor completa el título y monto.");
+            showToast("Por favor completa el título y monto.", "warning");
             return;
         }
 
@@ -52,6 +54,7 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
 
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+            {ToastComponent}
             <div className="bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:fade-in duration-300">
                 {/* Header */}
                 <div className="px-8 py-6 flex justify-between items-center">
