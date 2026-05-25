@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build:next": "next build",
+    "build": "next build && npx @opennextjs/cloudflare build --skipNextBuild",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "preview": "npx @opennextjs/cloudflare preview",
+    "deploy": "npm run build && npx wrangler deploy"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
