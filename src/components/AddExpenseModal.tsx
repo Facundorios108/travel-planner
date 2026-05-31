@@ -6,19 +6,29 @@ import { format } from "date-fns";
 import { ExpenseCategory } from "@/types/travel";
 import { Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, MoreHorizontal, X } from "lucide-react";
 import { hapticFeedback } from "@/utils/haptics";
+import { useAuth } from "@/context/AuthContext";
 
 interface AddExpenseModalProps {
     onClose: () => void;
     onSave: (data: any) => Promise<void>;
+    participants?: string[];
+    defaultPaidBy?: string;
 }
 
-export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProps) {
+export default function AddExpenseModal({ 
+    onClose, 
+    onSave,
+    participants = [],
+    defaultPaidBy
+}: AddExpenseModalProps) {
+    const { user } = useAuth();
     const { showToast, ToastComponent } = useToast();
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
     const [currency, setCurrency] = useState("USD");
     const [category, setCategory] = useState<ExpenseCategory>("other");
     const [date, setDate] = useState<Date>(new Date());
+    const [paidBy, setPaidBy] = useState(defaultPaidBy || user?.email || "");
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
@@ -47,7 +57,8 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                 amount: Number(amount),
                 currency,
                 category,
-                date
+                date,
+                paidBy: paidBy || user?.email || ""
             });
             setIsSuccess(true);
             hapticFeedback.success();
@@ -176,6 +187,28 @@ export default function AddExpenseModal({ onClose, onSave }: AddExpenseModalProp
                                             className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                         />
                                     </div>
+                                </div>
+
+                                {/* ¿Quién pagó? */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                        ¿Quién pagó?
+                                    </label>
+                                    <select
+                                        value={paidBy}
+                                        onChange={(e) => setPaidBy(e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    >
+                                        {participants && participants.length > 0 ? (
+                                            participants.map((participant) => (
+                                                <option key={participant} value={participant}>
+                                                    {participant === user?.email ? `${participant} (Tú)` : participant}
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <option value={user?.email || ""}>{user?.email || "Cargando..."}</option>
+                                        )}
+                                    </select>
                                 </div>
 
                                 {/* Categoría */}

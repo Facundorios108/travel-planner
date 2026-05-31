@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Trip } from "@/types/travel";
+import { Trip, Destination } from "@/types/travel";
+import { travelService } from "@/lib/services";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Toast, useToast } from "./Toast";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -238,6 +239,8 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     const [destinationTime, setDestinationTime] = useState<string>("");
     const [localTime, setLocalTime] = useState<string>("");
     const [timeDiff, setTimeDiff] = useState<string>("");
+    const [destinations, setDestinations] = useState<Destination[]>([]);
+    const [destinationsLoading, setDestinationsLoading] = useState(false);
 
     // ─── Currency States ───
     const [currencyRates, setCurrencyRates] = useState<CurrencyRates | null>(null);
@@ -482,6 +485,40 @@ export default function TravelTools({ trips }: TravelToolsProps) {
             fetchWeather(selectedCity);
         }
     }, [selectedCity, fetchWeather]);
+
+    // Load destinations for the selected trip
+    useEffect(() => {
+        if (!selectedTripId) {
+            setDestinations([]);
+            return;
+        }
+        
+        const loadDestinations = async () => {
+            setDestinationsLoading(true);
+            try {
+                const list = await travelService.getTripDestinations(selectedTripId);
+                setDestinations(list);
+                
+                if (list.length > 0) {
+                    setSelectedCity(list[0].city);
+                } else {
+                    const trip = trips.find(t => t.id === selectedTripId);
+                    if (trip?.destination) {
+                        const cityName = trip.destination.split(",")[0].trim();
+                        if (cityName) {
+                            setSelectedCity(cityName);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading destinations:", err);
+            } finally {
+                setDestinationsLoading(false);
+            }
+        };
+        
+        loadDestinations();
+    }, [selectedTripId, trips]);
 
     // Live clock for destination timezone
     useEffect(() => {
@@ -829,50 +866,90 @@ export default function TravelTools({ trips }: TravelToolsProps) {
             {/* ═══════════════════════════════════════ */}
             {subTab === "destination" && (
                 <div className="space-y-5 animate-in fade-in duration-300">
-                    {/* City Selector */}
+                    {/* Trip Selector */}
+                    {trips.length > 0 && (
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                                Seleccionar viaje
+                            </label>
+                            <select
+                                value={selectedTripId}
+                                onChange={(e) => setSelectedTripId(e.target.value)}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm"
+                            >
+                                {trips.map(trip => (
+                                    <option key={trip.id} value={trip.id}>{trip.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Saved Destinations Quick Tap */}
                     <div className="space-y-2">
                         <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                            Seleccionar destino
+                            Destinos guardados en este viaje
                         </label>
-                        {allCities.length > 0 ? (
+                        {destinationsLoading ? (
+                            <div className="flex items-center gap-2 py-2">
+                                <Loader2 size={14} className="text-indigo-500 animate-spin" />
+                                <span className="text-xs text-slate-400 font-bold">Cargando destinos...</span>
+                            </div>
+                        ) : destinations.length > 0 ? (
                             <div className="flex gap-2 flex-wrap">
-                                {allCities.map((c, i) => (
+                                {destinations.map((dest) => (
                                     <button
-                                        key={i}
-                                        onClick={() => setSelectedCity(c.city)}
-                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${selectedCity === c.city
-                                            ? "bg-indigo-600 text-white border-transparent shadow-md shadow-indigo-500/25"
+                                        key={dest.id}
+                                        onClick={() => setSelectedCity(dest.city)}
+                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${selectedCity.toLowerCase() === dest.city.toLowerCase()
+                                            ? "bg-indigo-600 text-white border-transparent shadow-md shadow-indigo-500/25 scale-[1.03]"
                                             : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"}`}
                                     >
-                                        <MapPin size={12} className="inline mr-1" />
-                                        {c.city}
+                                        <MapPin size={12} />
+                                        <span>{dest.city}</span>
                                     </button>
                                 ))}
                             </div>
                         ) : (
-                            /* Manual city input if no trips with destinations */
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Ej: París, Tokio, Cancún..."
-                                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            setSelectedCity((e.target as HTMLInputElement).value);
-                                        }
-                                    }}
-                                />
-                                <button
-                                    onClick={() => {
-                                        const input = document.querySelector('input[placeholder*="París"]') as HTMLInputElement;
-                                        if (input?.value) setSelectedCity(input.value);
-                                    }}
-                                    className="px-4 py-3 bg-indigo-500 text-white rounded-xl font-bold text-sm shadow-md hover:bg-indigo-600 transition active:scale-95"
-                                >
-                                    Buscar
-                                </button>
-                            </div>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium italic py-1">
+                                No hay destinos guardados en el itinerario de este viaje.
+                            </p>
                         )}
+                    </div>
+
+                    {/* Manual Search Bar */}
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                            Búsqueda manual de otra ciudad
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                id="manual-city-input"
+                                type="text"
+                                placeholder="Ej: París, Tokio, Cancún..."
+                                className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm"
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        const val = (e.target as HTMLInputElement).value.trim();
+                                        if (val) {
+                                            setSelectedCity(val);
+                                            (e.target as HTMLInputElement).value = "";
+                                        }
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={() => {
+                                    const input = document.getElementById("manual-city-input") as HTMLInputElement;
+                                    if (input?.value.trim()) {
+                                        setSelectedCity(input.value.trim());
+                                        input.value = "";
+                                    }
+                                }}
+                                className="px-5 py-3 bg-indigo-500 text-white rounded-xl font-bold text-sm shadow-md hover:bg-indigo-600 transition active:scale-95 flex items-center justify-center gap-1.5"
+                            >
+                                Buscar
+                            </button>
+                        </div>
                     </div>
 
                     {/* Loading State */}

@@ -49,8 +49,19 @@ export default function ExpensesPage() {
         if (!user) return;
         const loadData = async () => {
             try {
-                const tripData = await travelService.getTrip(tripId);
-                setTrip(tripData);
+                let tripData = await travelService.getTrip(tripId);
+                
+                if (tripData) {
+                    // Retrofit creatorEmail if it doesn't exist and current user is the owner
+                    if (!tripData.creatorEmail && tripData.userId === user.uid && user.email) {
+                        await travelService.updateTrip(tripId, { creatorEmail: user.email });
+                        tripData.creatorEmail = user.email;
+                    }
+                    setTrip(tripData);
+                } else {
+                    setTrip(null);
+                }
+                
                 const expensesData = await travelService.getTripExpenses(tripId);
                 setExpenses(expensesData);
             } catch (err: any) {
@@ -142,6 +153,39 @@ export default function ExpensesPage() {
         return { categoryData, dailyData };
     }, [expenses]);
 
+    const participants = useMemo(() => {
+        if (!trip) return [];
+        const emails = new Set<string>();
+        if (trip.creatorEmail) {
+            emails.add(trip.creatorEmail);
+        } else if (trip.userId && user?.uid === trip.userId && user?.email) {
+            emails.add(user.email);
+        } else if (user?.email) {
+            emails.add(user.email);
+        }
+        if (trip.collaborators) {
+            trip.collaborators.forEach(c => emails.add(c));
+        }
+        return Array.from(emails);
+    }, [trip, user]);
+
+    const participantSpending = useMemo(() => {
+        const spending: Record<string, number> = {};
+        participants.forEach(p => {
+            spending[p] = 0;
+        });
+        expenses.forEach(exp => {
+            const payer = exp.paidBy || trip?.creatorEmail || "";
+            if (payer) {
+                spending[payer] = (spending[payer] || 0) + exp.amount;
+            }
+        });
+        return Object.entries(spending).map(([email, amount]) => ({
+            email,
+            amount
+        })).sort((a, b) => b.amount - a.amount);
+    }, [expenses, participants, trip]);
+
     if (authLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#f8f9fc] dark:bg-slate-950">
@@ -208,38 +252,42 @@ export default function ExpensesPage() {
                     <ArrowLeft size={24} className="text-slate-900 dark:text-slate-100" />
                 </button>
                 <h1 className="text-2xl font-bold tracking-tight">Expenses</h1>
-                <div className="relative">
-                    <button
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className={`w-12 h-12 flex items-center justify-center rounded-full shadow-sm transition-colors border ${activeFilter !== "all" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 border-blue-200" : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700"}`}
-                    >
-                        <Filter size={20} />
-                    </button>
-                    {isFilterOpen && (
-                        <div className="absolute top-14 right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 overflow-hidden z-20 animate-in fade-in zoom-in duration-200">
-                            <div className="py-2">
-                                <button
-                                    onClick={() => { setActiveFilter("all"); setIsFilterOpen(false); }}
-                                    className={`w-full text-left px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 ${activeFilter === "all" ? "text-blue-600 bg-blue-50/50 dark:bg-blue-900/20" : "text-slate-700 dark:text-slate-300"}`}
-                                >
-                                    Todos los Gastos
-                                </button>
-                                {['flight', 'accommodation', 'food', 'transport', 'activities', 'shopping'].map((cat) => (
+                {activeTab === "list" ? (
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className={`w-12 h-12 flex items-center justify-center rounded-full shadow-sm transition-colors border ${activeFilter !== "all" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 border-blue-200" : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700"}`}
+                        >
+                            <Filter size={20} />
+                        </button>
+                        {isFilterOpen && (
+                            <div className="absolute top-14 right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 overflow-hidden z-20 animate-in fade-in zoom-in duration-200">
+                                <div className="py-2">
                                     <button
-                                        key={cat}
-                                        onClick={() => { setActiveFilter(cat); setIsFilterOpen(false); }}
-                                        className={`w-full flex items-center gap-2 text-left px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 ${activeFilter === cat ? "text-blue-600 bg-blue-50/50 dark:bg-blue-900/20" : "text-slate-700 dark:text-slate-300"}`}
+                                        onClick={() => { setActiveFilter("all"); setIsFilterOpen(false); }}
+                                        className={`w-full text-left px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 ${activeFilter === "all" ? "text-blue-600 bg-blue-50/50 dark:bg-blue-900/20" : "text-slate-700 dark:text-slate-300"}`}
                                     >
-                                        <div className={`p-1 rounded-md ${getCategoryIcon(cat).color}`}>
-                                            {React.createElement(getCategoryIcon(cat).icon, { size: 14 })}
-                                        </div>
-                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                        Todos los Gastos
                                     </button>
-                                ))}
+                                    {['flight', 'accommodation', 'food', 'transport', 'activities', 'shopping'].map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => { setActiveFilter(cat); setIsFilterOpen(false); }}
+                                            className={`w-full flex items-center gap-2 text-left px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 ${activeFilter === cat ? "text-blue-600 bg-blue-50/50 dark:bg-blue-900/20" : "text-slate-700 dark:text-slate-300"}`}
+                                        >
+                                            <div className={`p-1 rounded-md ${getCategoryIcon(cat).color}`}>
+                                                {React.createElement(getCategoryIcon(cat).icon, { size: 14 })}
+                                            </div>
+                                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="w-12 h-12" />
+                )}
             </header>
 
             <main className="flex-1 px-6 pb-24">
@@ -412,6 +460,32 @@ export default function ExpensesPage() {
                                     </ResponsiveContainer>
                                 </div>
                             </div>
+                            
+                            {/* Gastos por Participante */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                    <CreditCard size={20} className="text-blue-500" /> Gastos por Participante
+                                </h3>
+                                <div className="space-y-4">
+                                    {participantSpending.map((spending) => (
+                                        <div key={spending.email} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                            <div className="flex flex-col min-w-0 flex-1 pr-4">
+                                                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                                                    {spending.email === user?.email ? `${spending.email} (Tú)` : spending.email}
+                                                </span>
+                                                <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                                    {expenses.filter(e => (e.paidBy || trip.creatorEmail || "") === spending.email).length} transacciones
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-base font-black text-slate-950 dark:text-white">
+                                                    {formatMoney(spending.amount)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )
                 ) : (
@@ -471,7 +545,12 @@ export default function ExpensesPage() {
 
             <TripBottomNav tripId={tripId} />
             {isAddExpenseModalOpen && (
-                <AddExpenseModal onClose={() => setIsAddExpenseModalOpen(false)} onSave={handleSaveExpense} />
+                <AddExpenseModal 
+                    onClose={() => setIsAddExpenseModalOpen(false)} 
+                    onSave={handleSaveExpense}
+                    participants={participants}
+                    defaultPaidBy={user?.email || undefined}
+                />
             )}
         </div>
     );

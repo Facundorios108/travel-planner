@@ -7,6 +7,8 @@ export interface Trip {
     endDate?: Date;
     coverImage?: string;
     collaborators?: string[]; // Array of user IDs who can access this trip
+    activeCollaborators?: string[]; // Array of collaborator emails that have opened the trip
+    creatorEmail?: string; // Email of the creator/owner of the trip
     description?: string;
     destination?: string;
     budget?: number;
@@ -56,6 +58,7 @@ export interface Expense {
     category: ExpenseCategory;
     date: Date;
     createdAt?: Date;
+    paidBy?: string; // Email of the user who paid
 }
 
 export type DocumentType = 'ticket' | 'hotel' | 'id' | 'train' | 'car' | 'other';

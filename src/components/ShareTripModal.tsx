@@ -237,9 +237,15 @@ export function ShareTripModal({ isOpen, onClose, trip, onTripUpdate }: ShareTri
                                                 <span className="text-sm font-bold truncate text-slate-700 dark:text-slate-300">
                                                     {collabEmail}
                                                 </span>
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded w-fit border border-amber-200 dark:border-amber-500/20">
-                                                    Pendiente
-                                                </span>
+                                                {trip.activeCollaborators?.includes(collabEmail) ? (
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded w-fit border border-emerald-200 dark:border-emerald-500/20">
+                                                        Activo
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded w-fit border border-amber-200 dark:border-amber-500/20">
+                                                        Pendiente
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <button

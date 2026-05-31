@@ -71,6 +71,32 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 
                 if (!mounted) return;
                 
+                if (tripData && user && user.email) {
+                    let needsUpdate = false;
+                    const updates: Partial<Trip> = {};
+
+                    // 1. Retrofit creatorEmail if missing and current user is creator
+                    if (!tripData.creatorEmail && user.uid === tripData.userId) {
+                        updates.creatorEmail = user.email;
+                        tripData.creatorEmail = user.email;
+                        needsUpdate = true;
+                    }
+
+                    // 2. Add current user to activeCollaborators if they are invited but not marked active yet
+                    const collaborators = tripData.collaborators || [];
+                    const activeCollaborators = tripData.activeCollaborators || [];
+                    if (collaborators.includes(user.email) && !activeCollaborators.includes(user.email)) {
+                        const updatedActive = [...activeCollaborators, user.email];
+                        updates.activeCollaborators = updatedActive;
+                        tripData.activeCollaborators = updatedActive;
+                        needsUpdate = true;
+                    }
+
+                    if (needsUpdate) {
+                        await travelService.updateTrip(tripId, updates);
+                    }
+                }
+                
                 setTrip(tripData);
                 setDestinations(destinationsData);
                 setActivities(activitiesData);
