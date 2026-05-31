@@ -262,7 +262,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                 <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-slate-50 dark:to-slate-950"></div>
 
                 {/* Top Nav Area - MAS LIMPIA */}
-                <div className="absolute top-0 left-0 right-0 px-6 pt-10 pb-4 flex justify-between items-start z-30">
+                <div className="absolute top-0 left-0 right-0 px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 flex justify-between items-start z-30">
                     <button 
                         onClick={() => router.push("/")} 
                         className="w-12 h-12 flex items-center justify-center bg-white/25 hover:bg-white/40 backdrop-blur-2xl rounded-full text-white transition-all duration-200 shadow-xl hover:scale-110 active:scale-95"
@@ -357,7 +357,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             </header>
 
             {/* View Switcher - FUERA DEL HEADER */}
-            <div className="sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-2xl px-6 py-4">
+            <div className="sticky top-0 z-20 px-6 py-4 glass border-x-0 border-t-0 rounded-none shadow-sm">
                 <div className="flex justify-center">
                     <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-full shadow-md">
                         <button

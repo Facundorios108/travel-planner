@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Trip } from "@/types/travel";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Toast, useToast } from "./Toast";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { hapticFeedback } from "@/utils/haptics";
 import {
     Briefcase, CheckSquare, Square, Plus, Trash2,
     Sparkles, RefreshCw, DollarSign, CloudSun,
@@ -142,6 +144,77 @@ function formatDayName(dateStr: string): string {
 function formatDayMonth(dateStr: string): string {
     const date = new Date(dateStr + "T12:00:00");
     return `${date.getDate()}/${date.getMonth() + 1}`;
+}
+
+interface PackingListItemProps {
+    item: PackingItem;
+    isFinalized: boolean;
+    onToggle: (id: string) => void;
+    onDelete: (id: string) => void;
+}
+
+function PackingListItem({ item, isFinalized, onToggle, onDelete }: PackingListItemProps) {
+    const { swipeOffset, isSwiping, onTouchStart, onTouchMove, onTouchEnd, resetSwipe } = useSwipeGesture({ threshold: 75 });
+
+    return (
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 first:rounded-t-3xl last:rounded-b-3xl">
+            {/* Background Action (revealed on swipe) */}
+            <div 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    hapticFeedback.medium();
+                    onDelete(item.id);
+                }}
+                className="absolute inset-y-0 right-0 w-[75px] bg-red-500 dark:bg-red-600 flex items-center justify-center text-white cursor-pointer active:bg-red-600 dark:active:bg-red-700 transition-colors"
+            >
+                <Trash2 size={18} className="animate-in fade-in zoom-in duration-200" />
+            </div>
+
+            {/* Main Item Container */}
+            <div
+                onTouchStart={!isFinalized ? onTouchStart : undefined}
+                onTouchMove={!isFinalized ? onTouchMove : undefined}
+                onTouchEnd={!isFinalized ? onTouchEnd : undefined}
+                onClick={() => {
+                    if (swipeOffset !== 0) {
+                        resetSwipe();
+                    } else if (!isFinalized) {
+                        onToggle(item.id);
+                    }
+                }}
+                style={{
+                    transform: `translateX(${swipeOffset}px)`,
+                    transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Spring physics
+                }}
+                className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/50 last:border-0 transition-colors group cursor-pointer select-none"
+            >
+                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                    <div className={`shrink-0 transition-colors ${item.checked ? "text-indigo-500" : "text-slate-400"}`}>
+                        {item.checked ? (
+                            <CheckSquare size={20} strokeWidth={2.5} />
+                        ) : (
+                            <Square size={20} strokeWidth={2} />
+                        )}
+                    </div>
+                    <span className={`text-sm truncate select-none transition-all ${item.checked ? "text-slate-400 line-through decoration-indigo-400" : "text-slate-800 dark:text-slate-200 font-medium"}`}>
+                        {item.text}
+                    </span>
+                </div>
+                {!isFinalized && (
+                    <div 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            hapticFeedback.medium();
+                            onDelete(item.id);
+                        }}
+                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
+                    >
+                        <Trash2 size={15} />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 }
 
 export default function TravelTools({ trips }: TravelToolsProps) {
@@ -724,32 +797,13 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                         <h3 className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider px-2">{category}</h3>
                                         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
                                             {categoryItems.map((item) => (
-                                                <div
+                                                <PackingListItem
                                                     key={item.id}
-                                                    onClick={() => !isFinalized && toggleItem(item.id)}
-                                                    className={`flex items-center justify-between p-4 transition group ${isFinalized ? "cursor-default" : "cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}
-                                                >
-                                                    <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                                                        <div className={`shrink-0 transition-colors ${item.checked ? "text-indigo-500" : "text-slate-400"}`}>
-                                                            {item.checked ? (
-                                                                <CheckSquare size={20} strokeWidth={2.5} />
-                                                            ) : (
-                                                                <Square size={20} strokeWidth={2} />
-                                                            )}
-                                                        </div>
-                                                        <span className={`text-sm truncate select-none transition-all ${item.checked ? "text-slate-400 line-through decoration-indigo-400" : "text-slate-850 dark:text-slate-200 font-medium"}`}>
-                                                            {item.text}
-                                                        </span>
-                                                    </div>
-                                                    {!isFinalized && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
-                                                            className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
-                                                        >
-                                                            <Trash2 size={15} />
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                    item={item}
+                                                    isFinalized={isFinalized}
+                                                    onToggle={toggleItem}
+                                                    onDelete={deleteItem}
+                                                />
                                             ))}
                                         </div>
                                     </div>

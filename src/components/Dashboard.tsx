@@ -125,7 +125,7 @@ export default function Dashboard() {
         <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-[430px]">
             {/* Modern Header */}
             {activeTab !== "profile" && (
-                <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-5 bg-white/90 dark:bg-slate-950/90 backdrop-blur-2xl border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm">
+                <header className="sticky top-0 z-10 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 glass shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="w-11 h-11 rounded-[1.1rem] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 transition-transform duration-200 hover:scale-105">
                             SF
@@ -203,7 +203,7 @@ export default function Dashboard() {
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-[400px] z-50 glass rounded-3xl border border-white/20 dark:border-slate-800/50 shadow-2xl overflow-hidden">
+            <nav className="fixed bottom-[calc(env(safe-area-inset-bottom)+16px)] left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-[400px] z-50 glass rounded-[2rem] shadow-2xl overflow-hidden">
                 <div className="flex justify-around items-center px-1 py-3">
                     <button
                         onClick={() => handleTabChange("home")}
