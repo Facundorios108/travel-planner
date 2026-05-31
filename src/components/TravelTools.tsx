@@ -247,6 +247,8 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     const [currencyLoading, setCurrencyLoading] = useState(false);
     const [baseCurrency, setBaseCurrency] = useState("USD");
     const [currencyAmount, setCurrencyAmount] = useState<string>("100");
+    const [argentineRates, setArgentineRates] = useState<any[] | null>(null);
+    const [argentineLoading, setArgentineLoading] = useState(false);
 
     // ─── Confirm Dialog State ───
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -484,7 +486,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
         if (selectedCity) {
             fetchWeather(selectedCity);
         }
-    }, [selectedCity, fetchWeather]);
+    }, [selectedCity]);
 
     // Load destinations for the selected trip
     useEffect(() => {
@@ -580,6 +582,43 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     // CURRENCY LOGIC
     // ═══════════════════════════════════════════════
 
+    const fetchArgentineRates = useCallback(async (force = false) => {
+        const cacheKey = "stayfinder_rates_argentina";
+        if (!force) {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    // Caché de 3 horas para la cotización de divisas en Argentina
+                    if (Date.now() - parsed.fetchedAt < 10800000) {
+                        setArgentineRates(parsed.data);
+                        return;
+                    }
+                } catch { /* ignore */ }
+            }
+        }
+
+        setArgentineLoading(true);
+        try {
+            const res = await fetch("https://dolarapi.com/v1/dolares");
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const filtered = data.filter(item => 
+                    item.casa === "oficial" || item.casa === "blue" || item.casa === "tarjeta"
+                );
+                setArgentineRates(filtered);
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    data: filtered,
+                    fetchedAt: Date.now()
+                }));
+            }
+        } catch (err) {
+            console.error("Error fetching Argentine rates:", err);
+        } finally {
+            setArgentineLoading(false);
+        }
+    }, []);
+
     const fetchRates = useCallback(async (base: string, force = false) => {
         const cacheKey = `stayfinder_rates_${base}`;
         if (!force) {
@@ -623,8 +662,9 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     useEffect(() => {
         if (subTab === "currency") {
             fetchRates(baseCurrency);
+            fetchArgentineRates();
         }
-    }, [subTab, baseCurrency, fetchRates]);
+    }, [subTab, baseCurrency, fetchRates, fetchArgentineRates]);
 
     const currencyAmountNum = parseFloat(currencyAmount) || 0;
 
@@ -1118,17 +1158,100 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                         {/* Update info + refresh */}
                         <div className="flex items-center justify-between px-1">
                             <span className="text-[10px] font-bold text-slate-400">
-                                {currencyLoading ? "Actualizando..." : getTimeSinceUpdate()}
+                                {currencyLoading || argentineLoading ? "Actualizando..." : getTimeSinceUpdate()}
                             </span>
                             <button
-                                onClick={() => fetchRates(baseCurrency, true)}
-                                disabled={currencyLoading}
+                                onClick={() => {
+                                    fetchRates(baseCurrency, true);
+                                    fetchArgentineRates(true);
+                                }}
+                                disabled={currencyLoading || argentineLoading}
                                 className="flex items-center gap-1 text-[10px] font-bold text-indigo-500 hover:text-indigo-600 transition disabled:opacity-50"
                             >
-                                <RefreshCw size={12} className={currencyLoading ? "animate-spin" : ""} />
+                                <RefreshCw size={12} className={currencyLoading || argentineLoading ? "animate-spin" : ""} />
                                 Actualizar
                             </button>
                         </div>
+
+                        {/* Argentine Dolar Card (Real Market Cotizaciones) */}
+                        {argentineRates && argentineRates.length > 0 && (
+                            <div className="bg-gradient-to-br from-indigo-50/50 to-blue-50/50 dark:from-slate-900/50 dark:to-indigo-950/20 border border-slate-100 dark:border-indigo-950/60 rounded-3xl p-5 space-y-4 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="text-xl">🇦🇷</span>
+                                        <div>
+                                            <h4 className="text-xs font-black text-slate-800 dark:text-indigo-200 uppercase tracking-wider">Mercado cambiario Argentina</h4>
+                                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-0.5">Cotizaciones reales del dólar</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-[8px] bg-emerald-500/10 dark:bg-emerald-400/15 text-emerald-600 dark:text-emerald-300 font-black px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                                        En Vivo
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    {argentineRates.map(rate => {
+                                        let title = rate.nombre;
+                                        let desc = "";
+                                        let bg = "bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/40";
+                                        let textCol = "text-slate-800 dark:text-white";
+                                        let labelCol = "text-slate-400 dark:text-slate-500";
+                                        
+                                        if (rate.casa === "blue") {
+                                            title = "Dólar Blue";
+                                            desc = "Informal / Libre";
+                                            bg = "bg-indigo-500 text-white dark:bg-indigo-600 shadow-md shadow-indigo-500/15";
+                                            textCol = "text-white";
+                                            labelCol = "text-indigo-100";
+                                        } else if (rate.casa === "tarjeta") {
+                                            title = "Dólar Tarjeta";
+                                            desc = "Compras exterior";
+                                            bg = "bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40";
+                                            textCol = "text-indigo-600 dark:text-indigo-300";
+                                        } else {
+                                            title = "Dólar BNA";
+                                            desc = "Oficial Banco";
+                                        }
+
+                                        return (
+                                            <div key={rate.casa} className={`p-3 rounded-2xl ${bg} flex flex-col justify-between h-20 shadow-sm transition-all hover:scale-[1.02]`}>
+                                                <div>
+                                                    <p className={`text-[9px] font-black uppercase leading-none ${labelCol}`}>
+                                                        {title}
+                                                    </p>
+                                                    <p className={`text-[8px] font-medium leading-tight mt-1 opacity-80 ${rate.casa === 'blue' ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                                                        {desc}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className={`text-sm font-black leading-none ${textCol}`}>
+                                                        ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(rate.venta)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                {/* Quick interactive calculator based on Blue & Tarjeta */}
+                                {currencyAmountNum > 0 && baseCurrency === "USD" && (
+                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2 text-[10px] text-slate-600 dark:text-slate-400 font-bold">
+                                        <div className="flex justify-between items-center">
+                                            <span>Mismo importe en Efectivo (Blue):</span>
+                                            <span className="text-indigo-600 dark:text-indigo-400 font-black text-xs">
+                                                ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(currencyAmountNum * (argentineRates.find(r => r.casa === "blue")?.venta || 0))} ARS
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span>Mismo importe con Tarjeta (Turista):</span>
+                                            <span className="text-indigo-600 dark:text-indigo-400 font-black text-xs">
+                                                ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(currencyAmountNum * (argentineRates.find(r => r.casa === "tarjeta")?.venta || 0))} ARS
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Conversion Results */}
                         <div className="space-y-3 pt-2">

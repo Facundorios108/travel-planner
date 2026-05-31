@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from "lucide-react";
 
 export type ToastVariant = "success" | "error" | "info" | "warning";
@@ -97,11 +97,11 @@ export function Toast({ message, variant = "info", isOpen, onClose, duration = 3
 export function useToast() {
     const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null);
 
-    const showToast = (message: string, variant: ToastVariant = "info") => {
+    const showToast = useCallback((message: string, variant: ToastVariant = "info") => {
         setToast({ message, variant });
-    };
+    }, []);
 
-    const hideToast = () => setToast(null);
+    const hideToast = useCallback(() => setToast(null), []);
 
     return {
         toast,

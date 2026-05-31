@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&family=Share+Tech+Mono&display=swap');
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -56,7 +57,7 @@
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
   }
 
-  :global(.dark) .glass {
+  .dark .glass {
     background-color: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -99,4 +100,63 @@ body {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+/* Passport Digital Styles */
+.passport-cover {
+  background: radial-gradient(circle at 50% 30%, #152A4A 0%, #0B1626 100%);
+  position: relative;
+  box-shadow: 
+    inset 0 1px 2px rgba(255,255,255,0.1),
+    inset 0 -1px 2px rgba(0,0,0,0.5),
+    0 12px 35px rgba(0,0,0,0.4),
+    0 4px 10px rgba(0,0,0,0.2);
+  border: 1px solid #1a2f4c;
+}
+
+.passport-cover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.4);
+}
+
+.passport-gold-emboss {
+  color: #E2C275;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4), 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.passport-inner {
+  background-color: #f4f7f6;
+  background-image: 
+    radial-gradient(circle at 100% 150%, transparent 24%, #e2ece9 24%, #e2ece9 28%, transparent 28%, transparent),
+    radial-gradient(circle at 0% 150%, transparent 24%, #e2ece9 24%, #e2ece9 28%, transparent 28%, transparent),
+    radial-gradient(circle at 50% 50%, #ebf3f1 0%, #f4f7f6 100%);
+  box-shadow: 
+    inset 0 0 40px rgba(0,0,0,0.03),
+    0 15px 35px rgba(0,0,0,0.2);
+}
+
+.dark .passport-inner {
+  background-color: #0c121e;
+  background-image: 
+    radial-gradient(circle at 100% 150%, transparent 24%, #141c2c 24%, #141c2c 28%, transparent 28%, transparent),
+    radial-gradient(circle at 0% 150%, transparent 24%, #141c2c 24%, #141c2c 28%, transparent 28%, transparent),
+    radial-gradient(circle at 50% 50%, #0e1624 0%, #0c121e 100%);
+  box-shadow: 
+    inset 0 0 40px rgba(0,0,0,0.2),
+    0 15px 35px rgba(0,0,0,0.4);
+}
+
+.font-signature {
+  font-family: 'Dancing Script', cursive;
+}
+
+.font-mrz {
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.12em;
 }

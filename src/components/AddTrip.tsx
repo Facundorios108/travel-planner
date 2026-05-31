@@ -134,15 +134,15 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col max-w-[480px] mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+        <div className="relative flex min-h-screen w-full flex-col max-w-[430px] mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
             {ToastComponent}
             {/* Custom Styles for Timeline Line */}
             <style jsx>{`
                 .itinerary-line {
                     position: absolute;
-                    left: 20px;
-                    top: 24px;
-                    bottom: -24px;
+                    left: 13px;
+                    top: 32px;
+                    bottom: -32px;
                     width: 2px;
                     background: repeating-linear-gradient(to bottom, #cbd5e1 0%, #cbd5e1 4px, transparent 4px, transparent 8px);
                 }
@@ -152,47 +152,53 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
             `}</style>
 
             {/* Header */}
-            <header className="sticky top-0 flex items-center justify-between p-4 pt-6 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl z-20 transition-colors border-b border-slate-200/50 dark:border-slate-800/50">
-                <button onClick={onBack} className="flex items-center justify-center h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm">
-                    <ArrowLeft size={20} />
+            <header className="sticky top-0 flex items-center justify-between p-4 pt-[calc(env(safe-area-inset-top)+16px)] bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl z-20 transition-colors border-b border-slate-200/50 dark:border-slate-800/50">
+                <button 
+                    onClick={onBack} 
+                    className="flex items-center justify-center h-10 w-10 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm border border-slate-200/10 active:scale-95 animate-in fade-in slide-in-from-left-4 duration-300"
+                >
+                    <ArrowLeft size={18} />
                 </button>
                 <div className="text-center">
-                    <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">Nuevo Viaje</h1>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Multi-destino</p>
+                    <h1 className="text-base font-black tracking-tight text-slate-950 dark:text-white">Nuevo Viaje</h1>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Planificador</p>
                 </div>
-                <div className="w-11"></div>
+                <div className="w-10"></div>
             </header>
 
             {/* Form */}
-            <main className="flex-1 overflow-y-auto px-6 pt-4 space-y-6 pb-32">
-                <form id="add-trip-form" onSubmit={handleSubmit} className="space-y-8">
+            <main className="flex-1 overflow-y-auto px-5 pt-5 space-y-6 pb-36">
+                <form id="add-trip-form" onSubmit={handleSubmit} className="space-y-6">
                     {/* Trip Name */}
-                    <div className="space-y-3 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="space-y-3 bg-white dark:bg-slate-900/40 backdrop-blur-md p-5 rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm relative group overflow-hidden transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 rounded-l-full"></div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                             Nombre del Viaje
                         </label>
-                        <div className="relative group">
+                        <div className="relative">
                             <input
                                 type="text"
                                 required
                                 value={tripName}
                                 onChange={(e) => setTripName(e.target.value)}
-                                placeholder="Ej: Eurotrip 2024"
-                                className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base font-semibold outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                placeholder="Ej: Eurotrip 2024 o Escapada a la Playa"
+                                className="w-full h-11 bg-transparent border-b border-slate-100 dark:border-slate-800/80 focus:border-blue-500 focus:ring-0 transition-colors text-base font-bold outline-none text-slate-950 dark:text-white placeholder:text-slate-400 pb-1"
                             />
                         </div>
                     </div>
 
                     {/* Itinerary Section */}
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between ml-1">
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between px-1">
+                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                 Itinerario
                             </label>
-                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{calculateTotalDays()} Días en Total</span>
+                            <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-full uppercase tracking-wider">
+                                {calculateTotalDays()} Días en Total
+                            </span>
                         </div>
 
-                        <div className="space-y-0 relative">
+                        <div className="space-y-5 relative">
                             {destinations.map((dest, index) => {
                                 const isFirst = index === 0;
                                 const isLast = index === destinations.length - 1;
@@ -200,79 +206,95 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                 // Calcular días locales (inclusive)
                                 let diffDays = 0;
                                 if (dest.startDate && dest.endDate) {
-                                    // Parsear fechas en zona horaria local para evitar problemas de timezone
                                     const start = new Date(dest.startDate + 'T00:00:00');
                                     const end = new Date(dest.endDate + 'T00:00:00');
-                                    // Contar días inclusive: del 1 al 20 son 20 días
                                     diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                                 }
 
                                 return (
-                                    <div key={dest.id} className="relative flex flex-col gap-4 py-3 group">
-                                        {/* Timeline Line (don't show on last item to prevent overflow) */}
+                                    <div key={dest.id} className="relative pl-9 group">
+                                        {/* Timeline Line */}
                                         {!isLast && <div className="itinerary-line"></div>}
 
-                                        <div className="flex gap-4">
-                                            {/* Location Pin */}
-                                            <div className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ${isFirst ? 'bg-blue-500 text-white' : 'bg-white border-2 border-blue-500 text-blue-500'}`}>
-                                                <MapPin size={18} />
+                                        {/* Location Pin */}
+                                        <div className={`absolute left-0 top-5 flex h-7.5 w-7.5 items-center justify-center rounded-full shadow-md transition-all group-hover:scale-110 z-10 ${
+                                            isFirst 
+                                                ? 'bg-blue-500 text-white border border-blue-400 shadow-blue-500/20' 
+                                                : 'bg-white dark:bg-slate-900 border-2 border-blue-500 text-blue-500'
+                                        }`}>
+                                            <MapPin size={13} />
+                                        </div>
+
+                                        {/* Destination Card ("Boarding Pass" Style) */}
+                                        <div className="flex-1 bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-[2.2rem] p-5 shadow-sm space-y-4 hover:shadow-md transition-all duration-300 relative group-hover:border-slate-300 dark:group-hover:border-slate-700">
+                                            {/* Card Header */}
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-full">
+                                                        Parada {index + 1}
+                                                    </span>
+                                                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">
+                                                        {isFirst ? "Inicio" : (isLast ? "Destino final" : "Escala")}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {diffDays > 0 && (
+                                                        <span className="text-[9px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                                            {diffDays} {diffDays === 1 ? 'Día' : 'Días'}
+                                                        </span>
+                                                    )}
+                                                    {destinations.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveDestination(dest.id)}
+                                                            className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition active:scale-95 shrink-0 animate-in fade-in duration-200"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            {/* Content Block */}
-                                            <div className="flex flex-col flex-1 pb-4">
-                                                <div className="flex flex-1 items-start justify-between">
-                                                    <div className="flex flex-col flex-1 pr-2">
-                                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">
-                                                            {isFirst ? "Punto de inicio" : (isLast ? "Destino final" : "Siguiente parada")}
-                                                        </span>
-                                                        <div className="w-full">
-                                                            <LocationSearch
-                                                                placeholder="Buscar ciudad..."
-                                                                value={dest.city ? (dest.country ? `${dest.city}, ${dest.country}` : dest.city) : ""}
-                                                                onSelect={(loc) => updateLocation(dest.id, loc)}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-2 mt-4">
-                                                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full whitespace-nowrap">
-                                                            <span className="text-xs font-bold dark:text-slate-200">{diffDays}</span>
-                                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">días</span>
-                                                        </div>
-                                                        {destinations.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveDestination(dest.id)}
-                                                                className="text-slate-300 hover:text-red-500 transition px-2"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                            {/* Location Input */}
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 pl-1 block">
+                                                    Ciudad de Destino
+                                                </label>
+                                                <LocationSearch
+                                                    placeholder="Ej: Barcelona, Londres, Madrid..."
+                                                    value={dest.city ? (dest.country ? `${dest.city}, ${dest.country}` : dest.city) : ""}
+                                                    onSelect={(loc) => updateLocation(dest.id, loc)}
+                                                />
+                                            </div>
 
-                                                {/* Date Inputs */}
-                                                <div className="flex flex-col sm:flex-row gap-3 mt-3 w-full max-w-[280px]">
-                                                    <div className="flex-1 bg-white dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-800">
-                                                        <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block mb-1">C/IN</label>
-                                                        <input
-                                                            type="date"
-                                                            required
-                                                            value={dest.startDate}
-                                                            onChange={(e) => updateDestination(dest.id, "startDate", e.target.value)}
-                                                            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-300 text-sm font-medium"
-                                                        />
+                                            {/* Date Inputs */}
+                                            <div className="grid grid-cols-2 gap-3 mt-3">
+                                                <div className="relative bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-2.5 border border-slate-200/40 dark:border-slate-800/60 transition-all focus-within:border-blue-500/40">
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                                        <Calendar size={11} className="text-blue-500" />
+                                                        <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Llegada</span>
                                                     </div>
-                                                    <div className="flex-1 bg-white dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-800">
-                                                        <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block mb-1">C/OUT</label>
-                                                        <input
-                                                            type="date"
-                                                            required
-                                                            value={dest.endDate}
-                                                            min={dest.startDate}
-                                                            onChange={(e) => updateDestination(dest.id, "endDate", e.target.value)}
-                                                            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-300 text-sm font-medium"
-                                                        />
+                                                    <input
+                                                        type="date"
+                                                        required
+                                                        value={dest.startDate}
+                                                        onChange={(e) => updateDestination(dest.id, "startDate", e.target.value)}
+                                                        className="w-full bg-transparent outline-none text-slate-800 dark:text-slate-100 text-xs font-bold [color-scheme:light] dark:[color-scheme:dark]"
+                                                    />
+                                                </div>
+                                                <div className="relative bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-2.5 border border-slate-200/40 dark:border-slate-800/60 transition-all focus-within:border-blue-500/40">
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                                        <Calendar size={11} className="text-blue-500" />
+                                                        <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Salida</span>
                                                     </div>
+                                                    <input
+                                                        type="date"
+                                                        required
+                                                        value={dest.endDate}
+                                                        min={dest.startDate}
+                                                        onChange={(e) => updateDestination(dest.id, "endDate", e.target.value)}
+                                                        className="w-full bg-transparent outline-none text-slate-800 dark:text-slate-100 text-xs font-bold [color-scheme:light] dark:[color-scheme:dark]"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -285,22 +307,22 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                         <button
                             type="button"
                             onClick={handleAddDestination}
-                            className="flex items-center gap-2 py-3 px-5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all rounded-xl ml-8 font-bold text-sm"
+                            className="flex items-center gap-2 py-3 px-5 text-indigo-500 hover:text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-300 transition-all hover:scale-[1.01] active:scale-[0.98] rounded-2xl ml-9 font-bold text-xs shadow-sm shadow-indigo-500/5"
                         >
-                            <PlusCircle size={20} />
-                            <span>Añadir Destino</span>
+                            <PlusCircle size={16} />
+                            <span>Añadir escala al viaje</span>
                         </button>
                     </div>
 
                     {/* Temporary Map Visualizer Placeholder */}
-                    <div className="pt-4">
-                        <div className="w-full aspect-[21/9] rounded-2xl bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-200/50 dark:border-slate-800/50">
-                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center opacity-60 grayscale dark:opacity-30" />
+                    <div className="pt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="w-full aspect-[21/9] rounded-[2rem] bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-200/50 dark:border-slate-800/50 shadow-inner">
+                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center opacity-60 grayscale dark:opacity-20" />
                             <div className="absolute inset-0 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent"></div>
                             <div className="absolute bottom-4 left-4">
                                 <div className="flex items-center gap-2">
-                                    <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Planeando ruta...</span>
+                                    <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Trazando ruta del mapa...</span>
                                 </div>
                             </div>
                         </div>
@@ -309,19 +331,19 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
             </main>
 
             {/* Fixed Bottom Footer */}
-            <footer className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-slate-50 via-slate-50/95 dark:from-slate-950 dark:via-slate-950/95 to-transparent z-20">
+            <footer className="absolute bottom-0 left-0 right-0 p-5 pt-10 bg-gradient-to-t from-slate-50 via-slate-50/95 dark:from-slate-950 dark:via-slate-950/95 to-transparent z-20">
                 <button
                     form="add-trip-form"
                     type="submit"
                     disabled={loading}
-                    className="w-full h-14 bg-blue-500 text-white rounded-full font-bold text-lg shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="w-full h-13 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white rounded-2xl font-bold text-base shadow-lg shadow-indigo-500/25 hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 shadow-indigo-500/30"
                 >
                     {loading ? (
-                        <Loader2 className="animate-spin w-6 h-6" />
+                        <Loader2 className="animate-spin w-5 h-5" />
                     ) : (
                         <>
                             <span>Crear Viaje</span>
-                            <PlaneTakeoff size={20} />
+                            <PlaneTakeoff size={18} className="animate-bounce" />
                         </>
                     )}
                 </button>
