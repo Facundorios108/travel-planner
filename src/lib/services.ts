@@ -15,10 +15,39 @@ import {
     deleteField,
     setDoc,
 } from "firebase/firestore";
-import { Trip, Activity, Destination, Expense, UserSettings } from "@/types/travel";
+import { Trip, Activity, Destination, Expense, UserSettings, UserPassport, PassportCountry } from "@/types/travel";
 import { dataCache, cacheKeys } from "@/utils/dataCache";
 
 export const travelService = {
+    // User Profile
+    async saveUserProfile(userId: string, email: string | null, displayName: string | null): Promise<void> {
+        if (!email) return;
+        const docRef = doc(db, "users", userId);
+        await setDoc(docRef, {
+            email: email.toLowerCase(),
+            displayName: displayName || email.split("@")[0],
+            updatedAt: new Date()
+        }, { merge: true });
+    },
+
+    async getUserNameByEmail(email: string): Promise<string> {
+        if (!email) return "";
+        try {
+            const q = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const data = querySnapshot.docs[0].data();
+                return data.displayName || email.split("@")[0];
+            }
+        } catch (e) {
+            console.error("Error getting user profile name:", e);
+        }
+        // Fallback formatting
+        const prefix = email.split("@")[0];
+        const clean = prefix.replace(/[0-9._-]/g, " ").trim();
+        return clean ? clean.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") : prefix;
+    },
+
     // User Settings
     async getUserSettings(userId: string): Promise<UserSettings | null> {
         const docRef = doc(db, "userSettings", userId);
@@ -149,16 +178,18 @@ export const travelService = {
 
     async inviteCollaborator(tripId: string, email: string, inviterName?: string): Promise<{ success: boolean; message: string }> {
         try {
+            const cleanEmail = email.trim().toLowerCase();
             const tripSnap = await getDoc(doc(db, "trips", tripId));
             if (!tripSnap.exists()) return { success: false, message: "Viaje no encontrado" };
 
             const tripData = tripSnap.data();
             const currentCollabs = tripData.collaborators || [];
+            const currentCollabsLower = currentCollabs.map((c: string) => c.toLowerCase());
 
-            if (currentCollabs.includes(email)) return { success: false, message: "El usuario ya es colaborador" };
+            if (currentCollabsLower.includes(cleanEmail)) return { success: false, message: "El usuario ya es colaborador" };
 
             await updateDoc(doc(db, "trips", tripId), {
-                collaborators: [...currentCollabs, email]
+                collaborators: [...currentCollabs, cleanEmail]
             });
 
             // Send email invitation
@@ -167,7 +198,7 @@ export const travelService = {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        to: email,
+                        to: cleanEmail,
                         tripName: tripData.name || 'Tu viaje',
                         inviterName: inviterName || 'Un amigo',
                         tripId: tripId
@@ -191,18 +222,19 @@ export const travelService = {
 
     async removeCollaborator(tripId: string, email: string): Promise<{ success: boolean; message: string }> {
         try {
+            const cleanEmail = email.trim().toLowerCase();
             const tripSnap = await getDoc(doc(db, "trips", tripId));
             if (!tripSnap.exists()) return { success: false, message: "Viaje no encontrado" };
 
             const tripData = tripSnap.data();
             const currentCollabs = tripData.collaborators || [];
 
-            if (!currentCollabs.includes(email)) return { success: false, message: "El usuario no es colaborador" };
-
-            const updatedCollabs = currentCollabs.filter((collab: string) => collab !== email);
+            const updatedCollabs = currentCollabs.filter((collab: string) => collab.toLowerCase() !== cleanEmail);
+            const updatedActiveCollabs = (tripData.activeCollaborators || []).filter((collab: string) => collab.toLowerCase() !== cleanEmail);
 
             await updateDoc(doc(db, "trips", tripId), {
-                collaborators: updatedCollabs
+                collaborators: updatedCollabs,
+                activeCollaborators: updatedActiveCollabs
             });
 
             // Invalidate cache
@@ -397,6 +429,11 @@ export const travelService = {
         await deleteDoc(docRef);
     },
 
+    async updateExpense(id: string, data: Partial<Expense>): Promise<void> {
+        const docRef = doc(db, "expenses", id);
+        await updateDoc(docRef, data);
+    },
+
     // Documents
     async addDocument(data: Omit<import("@/types/travel").TripDocument, "id">): Promise<string> {
         const docRef = await addDoc(collection(db, "documents"), {
@@ -428,5 +465,58 @@ export const travelService = {
     async deleteDocument(id: string): Promise<void> {
         const docRef = doc(db, "documents", id);
         await deleteDoc(docRef);
+    },
+
+    // Passport Map Services
+    async getUserPassport(userId: string): Promise<UserPassport | null> {
+        const cacheKey = `passport:user:${userId}`;
+        const cached = dataCache.get<UserPassport>(cacheKey);
+        if (cached) return cached;
+
+        try {
+            const docRef = doc(db, "passports", userId);
+            const snap = await getDoc(docRef);
+            if (!snap.exists()) return null;
+
+            const data = snap.data();
+            const passport: UserPassport = {
+                userId,
+                countries: data.countries || {},
+                updatedAt: data.updatedAt?.toDate() || new Date(),
+            };
+
+            dataCache.set(cacheKey, passport, 10 * 60 * 1000);
+            return passport;
+        } catch (error) {
+            console.error("Error fetching user passport:", error);
+            return null;
+        }
+    },
+
+    async saveUserPassport(userId: string, countries: Record<string, PassportCountry>): Promise<void> {
+        const cleanObject = (obj: any): any => {
+            const clean: any = {};
+            Object.keys(obj).forEach(key => {
+                const val = obj[key];
+                if (val === undefined) return;
+                if (val && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
+                    clean[key] = cleanObject(val);
+                } else {
+                    clean[key] = val;
+                }
+            });
+            return clean;
+        };
+
+        const docRef = doc(db, "passports", userId);
+        const payload = {
+            countries: cleanObject(countries),
+            updatedAt: serverTimestamp(),
+        };
+        await setDoc(docRef, payload);
+
+        // Invalidate cache
+        const cacheKey = `passport:user:${userId}`;
+        dataCache.invalidate(cacheKey);
     },
 };

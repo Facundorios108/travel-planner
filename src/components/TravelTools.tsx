@@ -286,7 +286,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     // Load packing list when trip changes
     useEffect(() => {
         if (!user || !selectedTripId) return;
-        const key = `stayfinder_packing_${user.uid}_${selectedTripId}`;
+        const key = `catchme_packing_${user.uid}_${selectedTripId}`;
         const stored = localStorage.getItem(key);
         if (stored) {
             try {
@@ -324,7 +324,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                 isFinalized: fin,
                 finalizedAt: fat,
             };
-            localStorage.setItem(`stayfinder_packing_${user.uid}_${selectedTripId}`, JSON.stringify(data));
+            localStorage.setItem(`catchme_packing_${user.uid}_${selectedTripId}`, JSON.stringify(data));
         }
     }, [user, selectedTripId, activeProfile, isFinalized, finalizedAt]);
 
@@ -423,7 +423,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
 
     const fetchWeather = useCallback(async (cityName: string) => {
         // Check cache first (1 hour)
-        const cacheKey = `stayfinder_weather_${cityName}`;
+        const cacheKey = `catchme_weather_${cityName}`;
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
             try {
@@ -583,7 +583,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     // ═══════════════════════════════════════════════
 
     const fetchArgentineRates = useCallback(async (force = false) => {
-        const cacheKey = "stayfinder_rates_argentina";
+        const cacheKey = "catchme_rates_argentina";
         if (!force) {
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
@@ -620,7 +620,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     }, []);
 
     const fetchRates = useCallback(async (base: string, force = false) => {
-        const cacheKey = `stayfinder_rates_${base}`;
+        const cacheKey = `catchme_rates_${base}`;
         if (!force) {
             const cached = localStorage.getItem(cacheKey);
             if (cached) {

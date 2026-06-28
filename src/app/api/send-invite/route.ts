@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitación a ${tripName} - StayFinder</title>
+    <title>Invitación a ${tripName} - CatchMe</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f7; padding: 40px 20px;">
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
                                     <td align="center" style="padding: 16px 0;">
                                         <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}" 
                                            style="display: inline-block; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);">
-                                            Abrir StayFinder →
+                                            Abrir CatchMe →
                                         </a>
                                     </td>
                                 </tr>
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
                                 <tr>
                                     <td style="background: #FEF3C7; border: 2px solid #FDE68A; border-radius: 12px; padding: 16px 20px;">
                                         <p style="margin: 0; color: #92400E; font-size: 13px; line-height: 1.6;">
-                                            <strong>💡 Importante:</strong> Para acceder al viaje, debes iniciar sesión en StayFinder usando este correo electrónico. El viaje aparecerá automáticamente en tu lista.
+                                            <strong>💡 Importante:</strong> Para acceder al viaje, debes iniciar sesión en CatchMe usando este correo electrónico. El viaje aparecerá automáticamente en tu lista.
                                         </p>
                                     </td>
                                 </tr>
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
                     <tr>
                         <td style="background: #F9FAFB; padding: 32px 40px; text-align: center; border-top: 1px solid #E5E7EB;">
                             <p style="margin: 0 0 8px; color: #6B7280; font-size: 14px; font-weight: 600;">
-                                StayFinder
+                                CatchMe
                             </p>
                             <p style="margin: 0; color: #9CA3AF; font-size: 12px;">
                                 Planifica tus viajes juntos
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
         try {
             const { data, error } = await resend.emails.send({
-                from: 'StayFinder <onboarding@resend.dev>', // Usaremos el dominio de prueba de Resend
+                from: 'CatchMe <onboarding@resend.dev>', // Usaremos el dominio de prueba de Resend
                 to: [to],
                 subject: `¡Te invitaron a colaborar en ${tripName}!`,
                 html: htmlContent,

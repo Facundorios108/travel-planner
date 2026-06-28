@@ -85,10 +85,24 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                     // 2. Add current user to activeCollaborators if they are invited but not marked active yet
                     const collaborators = tripData.collaborators || [];
                     const activeCollaborators = tripData.activeCollaborators || [];
-                    if (collaborators.includes(user.email) && !activeCollaborators.includes(user.email)) {
-                        const updatedActive = [...activeCollaborators, user.email];
+                    const userEmailLower = user.email ? user.email.toLowerCase() : "";
+                    const collaboratorsLower = collaborators.map((c: string) => c.toLowerCase());
+                    const activeCollaboratorsLower = activeCollaborators.map((c: string) => c.toLowerCase());
+
+                    if (userEmailLower && collaboratorsLower.includes(userEmailLower) && !activeCollaboratorsLower.includes(userEmailLower)) {
+                        const matchedEmail = collaborators.find((c: string) => c.toLowerCase() === userEmailLower) || user.email;
+                        const updatedActive = [...activeCollaborators, matchedEmail];
                         updates.activeCollaborators = updatedActive;
                         tripData.activeCollaborators = updatedActive;
+                        needsUpdate = true;
+                    }
+
+                    // 3. Retroactively convert any mixed-case collaborator emails to lowercase
+                    const hasUppercaseCollab = collaborators.some((c: string) => c !== c.toLowerCase());
+                    if (hasUppercaseCollab) {
+                        const normalizedCollabs = collaborators.map((c: string) => c.toLowerCase());
+                        updates.collaborators = normalizedCollabs;
+                        tripData.collaborators = normalizedCollabs;
                         needsUpdate = true;
                     }
 

@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import { useToast } from "./Toast";
 import { format } from "date-fns";
-import { ExpenseCategory } from "@/types/travel";
-import { Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, MoreHorizontal, X } from "lucide-react";
+import { Expense, ExpenseCategory } from "@/types/travel";
+import { Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, MoreHorizontal, X, Trash2 } from "lucide-react";
 import { hapticFeedback } from "@/utils/haptics";
 import { useAuth } from "@/context/AuthContext";
 
@@ -13,24 +13,29 @@ interface AddExpenseModalProps {
     onSave: (data: any) => Promise<void>;
     participants?: string[];
     defaultPaidBy?: string;
+    expense?: Expense;
+    onDelete?: () => Promise<void>;
 }
 
 export default function AddExpenseModal({ 
     onClose, 
     onSave,
     participants = [],
-    defaultPaidBy
+    defaultPaidBy,
+    expense,
+    onDelete
 }: AddExpenseModalProps) {
     const { user } = useAuth();
     const { showToast, ToastComponent } = useToast();
-    const [title, setTitle] = useState("");
-    const [amount, setAmount] = useState("");
-    const [currency, setCurrency] = useState("USD");
-    const [category, setCategory] = useState<ExpenseCategory>("other");
-    const [date, setDate] = useState<Date>(new Date());
-    const [paidBy, setPaidBy] = useState(defaultPaidBy || user?.email || "");
+    const [title, setTitle] = useState(expense?.title || "");
+    const [amount, setAmount] = useState(expense?.amount?.toString() || "");
+    const [currency, setCurrency] = useState(expense?.currency || "USD");
+    const [category, setCategory] = useState<ExpenseCategory>(expense?.category || "other");
+    const [date, setDate] = useState<Date>(expense?.date || new Date());
+    const [paidBy, setPaidBy] = useState(expense?.paidBy || defaultPaidBy || user?.email || "");
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const categories: { value: ExpenseCategory, label: string, icon: React.ElementType }[] = [
         { value: "flight", label: "Vuelo", icon: Plane },
@@ -69,6 +74,23 @@ export default function AddExpenseModal({
             console.error("Error saving expense:", error);
             showToast("Error al guardar el gasto.", "error");
             setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!onDelete) return;
+        setIsDeleting(true);
+        try {
+            await onDelete();
+            setIsSuccess(true);
+            hapticFeedback.success();
+            setTimeout(() => {
+                onClose();
+            }, 1300);
+        } catch (error) {
+            console.error("Error deleting expense:", error);
+            showToast("Error al eliminar el gasto.", "error");
+            setIsDeleting(false);
         }
     };
 
@@ -125,14 +147,18 @@ export default function AddExpenseModal({
                                 />
                             </svg>
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">¡Gasto Guardado!</h3>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Se ha registrado exitosamente.</p>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+                            {isDeleting ? "¡Gasto Eliminado!" : expense ? "¡Gasto Guardado!" : "¡Gasto Guardado!"}
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
+                            {isDeleting ? "Se ha eliminado exitosamente." : "Se ha registrado exitosamente."}
+                        </p>
                     </div>
                 ) : (
                     <>
                         {/* Header */}
                         <div className="px-8 py-6 flex justify-between items-center">
-                            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Añadir Gasto</h2>
+                            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">{expense ? "Editar Gasto" : "Añadir Gasto"}</h2>
                             <button
                                 onClick={onClose}
                                 className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200"
@@ -141,19 +167,20 @@ export default function AddExpenseModal({
                             </button>
                         </div>
 
-                        {/* Body */}
-                        <div className="px-8 pb-8">
-                            <form onSubmit={handleSubmit} className="space-y-7">
+                        {/* Body & Form */}
+                        <form onSubmit={handleSubmit}>
+                            {/* Scrollable inputs wrapper */}
+                            <div className="px-8 pb-4 max-h-[calc(85vh-200px)] overflow-y-auto space-y-5 pr-4 scrollbar-thin">
                                 {/* Title */}
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                                         Título del Gasto
                                     </label>
                                     <input
                                         type="text"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-slate-100 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                         placeholder="Ej. Cena restaurante"
                                         autoFocus
                                     />
@@ -162,7 +189,7 @@ export default function AddExpenseModal({
                                 {/* Amount & Date */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                                             Monto
                                         </label>
                                         <input
@@ -170,12 +197,12 @@ export default function AddExpenseModal({
                                             step="0.01"
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-lg font-bold placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-slate-100 text-base font-bold placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                             placeholder="0.00"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                                             Fecha
                                         </label>
                                         <input
@@ -184,20 +211,20 @@ export default function AddExpenseModal({
                                             onChange={(e) => {
                                                 if (e.target.value) setDate(new Date(e.target.value));
                                             }}
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800/80 rounded-2xl px-4 py-3 text-slate-900 dark:text-slate-100 text-xs font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                         />
                                     </div>
                                 </div>
 
                                 {/* ¿Quién pagó? */}
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                                         ¿Quién pagó?
                                     </label>
                                     <select
                                         value={paidBy}
                                         onChange={(e) => setPaidBy(e.target.value)}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     >
                                         {participants && participants.length > 0 ? (
                                             participants.map((participant) => (
@@ -213,10 +240,10 @@ export default function AddExpenseModal({
 
                                 {/* Categoría */}
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                                         Categoría
                                     </label>
-                                    <div className="flex flex-wrap gap-2.5">
+                                    <div className="flex flex-wrap gap-2">
                                         {categories.map((cat) => {
                                             const Icon = cat.icon;
                                             return (
@@ -224,38 +251,51 @@ export default function AddExpenseModal({
                                                     key={cat.value}
                                                     type="button"
                                                     onClick={() => setCategory(cat.value)}
-                                                    className={`flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold transition-all duration-200 ${category === cat.value
+                                                    className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full text-xs font-bold transition-all duration-200 ${category === cat.value
                                                         ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105"
                                                         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-105"
                                                         }`}
                                                 >
-                                                    <Icon size={16} />
+                                                    <Icon size={14} />
                                                     {cat.label}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Actions */}
-                                <div className="pt-6 grid grid-cols-2 gap-4">
+                            {/* Actions (Sticky footer below scroll container) */}
+                            <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900 space-y-3">
+                                {onDelete && (
+                                    <button
+                                        type="button"
+                                        onClick={handleDelete}
+                                        disabled={isSaving || isDeleting}
+                                        className="w-full font-bold px-6 py-3 rounded-full border-2 border-rose-200 dark:border-rose-950/40 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 text-sm"
+                                    >
+                                        <Trash2 size={16} />
+                                        {isDeleting ? "Eliminando..." : "Eliminar Gasto"}
+                                    </button>
+                                )}
+                                <div className="grid grid-cols-2 gap-4">
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="w-full font-bold px-6 py-4 rounded-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95"
+                                        className="w-full font-bold px-6 py-3.5 rounded-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95 text-sm"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={isSaving}
-                                        className="w-full font-bold px-6 py-4 rounded-full text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-xl shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                                        disabled={isSaving || isDeleting}
+                                        className="w-full font-bold px-6 py-3.5 rounded-full text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-xl shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm"
                                     >
-                                        {isSaving ? "Guardando..." : "Guardar Gasto"}
+                                        {isSaving ? "Guardando..." : expense ? "Guardar" : "Guardar Gasto"}
                                     </button>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </>
                 )}
             </div>

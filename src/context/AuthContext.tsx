@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User, signOut as firebaseSignOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { travelService } from "@/lib/services";
 
 type AuthContextType = {
     user: User | null;
@@ -27,6 +28,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
+            if (user) {
+                travelService.saveUserProfile(user.uid, user.email, user.displayName).catch(e => {
+                    console.error("Failed to auto-save user profile:", e);
+                });
+            }
             setLoading(false);
         });
 

@@ -37,6 +37,8 @@ export default function ExpensesPage() {
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
+    const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+    const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
     const [activeFilter, setActiveFilter] = useState<string>("all");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"list" | "analytics">("list");
@@ -88,6 +90,35 @@ export default function ExpensesPage() {
         } catch (err) {
             console.error("Error saving expense:", err);
             showToast("Error al guardar gasto.", "error");
+        }
+    };
+
+    const handleUpdateExpense = async (data: any) => {
+        if (!selectedExpense) return;
+        try {
+            const updatedData = { ...selectedExpense, ...data };
+            await travelService.updateExpense(selectedExpense.id, data);
+            setExpenses(expenses.map(e => e.id === selectedExpense.id ? updatedData : e));
+            setIsAddExpenseModalOpen(false);
+            setSelectedExpense(null);
+            showToast("Gasto actualizado correctamente.", "success");
+        } catch (err) {
+            console.error("Error updating expense:", err);
+            showToast("Error al actualizar el gasto.", "error");
+        }
+    };
+
+    const handleDeleteExpense = async () => {
+        if (!selectedExpense) return;
+        try {
+            await travelService.deleteExpense(selectedExpense.id);
+            setExpenses(expenses.filter(e => e.id !== selectedExpense.id));
+            setIsAddExpenseModalOpen(false);
+            setSelectedExpense(null);
+            showToast("Gasto eliminado correctamente.", "success");
+        } catch (err) {
+            console.error("Error deleting expense:", err);
+            showToast("Error al eliminar el gasto.", "error");
         }
     };
 
@@ -168,6 +199,22 @@ export default function ExpensesPage() {
         }
         return Array.from(emails);
     }, [trip, user]);
+
+    // Fetch collaborator and creator names
+    useEffect(() => {
+        if (participants.length === 0) return;
+        async function fetchNames() {
+            const names: Record<string, string> = {};
+            await Promise.all(
+                participants.map(async (email) => {
+                    const name = await travelService.getUserNameByEmail(email);
+                    names[email] = name;
+                })
+            );
+            setParticipantNames(names);
+        }
+        fetchNames();
+    }, [participants]);
 
     const participantSpending = useMemo(() => {
         const spending: Record<string, number> = {};
@@ -471,7 +518,7 @@ export default function ExpensesPage() {
                                         <div key={spending.email} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800/50">
                                             <div className="flex flex-col min-w-0 flex-1 pr-4">
                                                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-                                                    {spending.email === user?.email ? `${spending.email} (Tú)` : spending.email}
+                                                    {spending.email === user?.email ? "Tú" : (participantNames[spending.email] || spending.email)}
                                                 </span>
                                                 <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                                                     {expenses.filter(e => (e.paidBy || trip.creatorEmail || "") === spending.email).length} transacciones
@@ -516,13 +563,23 @@ export default function ExpensesPage() {
                                     const uiInfo = getCategoryIcon(expense.category);
                                     const IconComponent = uiInfo.icon;
                                     return (
-                                        <div key={expense.id} className="flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-50 dark:border-slate-800/50 hover:border-blue-100 dark:hover:border-blue-900/30 transition-colors group">
+                                        <div 
+                                            key={expense.id} 
+                                            onClick={() => {
+                                                setSelectedExpense(expense);
+                                                setIsAddExpenseModalOpen(true);
+                                            }}
+                                            className="flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-50 dark:border-slate-800/50 hover:border-blue-100 dark:hover:border-blue-900/30 transition-all group cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/60 active:scale-[0.98]"
+                                        >
                                             <div className={`w-14 h-14 flex flex-shrink-0 items-center justify-center rounded-full ${uiInfo.color} transition-transform group-hover:scale-110 duration-300`}>
                                                 <IconComponent size={24} />
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">{expense.title}</h4>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mt-0.5">{format(expense.date, "MMM dd")} • {expense.category}</p>
+                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                                                    Pagado por: {expense.paidBy === user?.email ? "Tú" : (participantNames[expense.paidBy || trip.creatorEmail || ""] || expense.paidBy || "Creador")}
+                                                </p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-black text-slate-900 dark:text-white">{formatMoney(expense.amount)}</p>
@@ -546,8 +603,13 @@ export default function ExpensesPage() {
             <TripBottomNav tripId={tripId} />
             {isAddExpenseModalOpen && (
                 <AddExpenseModal 
-                    onClose={() => setIsAddExpenseModalOpen(false)} 
-                    onSave={handleSaveExpense}
+                    onClose={() => {
+                        setIsAddExpenseModalOpen(false);
+                        setSelectedExpense(null);
+                    }} 
+                    onSave={selectedExpense ? handleUpdateExpense : handleSaveExpense}
+                    onDelete={selectedExpense ? handleDeleteExpense : undefined}
+                    expense={selectedExpense || undefined}
                     participants={participants}
                     defaultPaidBy={user?.email || undefined}
                 />

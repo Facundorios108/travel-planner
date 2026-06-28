@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Users, Mail, Loader2, Check, Trash2, Link as LinkIcon, Copy } from "lucide-react";
 import { travelService } from "@/lib/services";
 import { Trip } from "@/types/travel";
@@ -26,6 +26,25 @@ export function ShareTripModal({ isOpen, onClose, trip, onTripUpdate }: ShareTri
     // ConfirmDialog state
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [emailToRemove, setEmailToRemove] = useState<string | null>(null);
+    const [collabNames, setCollabNames] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        if (!isOpen || !trip || !trip.collaborators || trip.collaborators.length === 0) return;
+
+        async function fetchNames() {
+            const collaboratorsList = trip?.collaborators || [];
+            const names: Record<string, string> = {};
+            await Promise.all(
+                collaboratorsList.map(async (email) => {
+                    const name = await travelService.getUserNameByEmail(email);
+                    names[email] = name;
+                })
+            );
+            setCollabNames(names);
+        }
+
+        fetchNames();
+    }, [isOpen, trip?.collaborators]);
 
     if (!isOpen || !trip) return null;
 
@@ -231,18 +250,23 @@ export function ShareTripModal({ isOpen, onClose, trip, onTripUpdate }: ShareTri
                                     <li key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                                                {collabEmail.charAt(0).toUpperCase()}
+                                                {(collabNames[collabEmail] || collabEmail).charAt(0).toUpperCase()}
                                             </div>
-                                            <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                                <span className="text-sm font-bold truncate text-slate-700 dark:text-slate-300">
-                                                    {collabEmail}
+                                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                                                <span className="text-sm font-bold truncate text-slate-700 dark:text-slate-350">
+                                                    {collabNames[collabEmail] || collabEmail}
                                                 </span>
-                                                {trip.activeCollaborators?.includes(collabEmail) ? (
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded w-fit border border-emerald-200 dark:border-emerald-500/20">
+                                                {collabNames[collabEmail] && (
+                                                    <span className="text-[11px] text-slate-500 dark:text-slate-450 truncate">
+                                                        {collabEmail}
+                                                    </span>
+                                                )}
+                                                {trip.activeCollaborators?.some(ac => ac.toLowerCase() === collabEmail.toLowerCase()) ? (
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded w-fit border border-emerald-200 dark:border-emerald-500/20 mt-1">
                                                         Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded w-fit border border-amber-200 dark:border-amber-500/20">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded w-fit border border-amber-200 dark:border-amber-500/20 mt-1">
                                                         Pendiente
                                                     </span>
                                                 )}

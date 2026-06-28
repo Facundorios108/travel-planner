@@ -4,7 +4,10 @@ import React, { useState } from "react";
 import { User } from "firebase/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { Trip } from "@/types/travel";
-import { Settings, Edit2, Sliders, CreditCard, HelpCircle, LogOut, X, Check, Mail, MessageSquare, AlertTriangle, ShieldCheck, BookOpen, Calendar, User as UserIcon } from "lucide-react";
+import { Settings, Edit2, Sliders, CreditCard, HelpCircle, LogOut, X, Check, Mail, MessageSquare, AlertTriangle, ShieldCheck, BookOpen, Calendar, User as UserIcon, FileText, Globe, ChevronRight, Loader2, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { travelService } from "@/lib/services";
+import { countriesList } from "@/utils/countriesData";
 
 interface UserProfileProps {
     user: User | null;
@@ -20,6 +23,51 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
 
     const [displayName, setDisplayName] = useState(user?.displayName || user?.email?.split('@')[0] || "Viajero");
     const userInitial = displayName[0]?.toUpperCase() || "U";
+
+    // Sheets & Modal states
+    const [activeStatDetail, setActiveStatDetail] = useState<"trips" | "countries" | "docs" | null>(null);
+    const [passportCountries, setPassportCountries] = useState<any[]>([]);
+    const [savedDocuments, setSavedDocuments] = useState<any[]>([]);
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    // Fetch stats data on load
+    React.useEffect(() => {
+        if (!user) return;
+        async function fetchStatsData() {
+            try {
+                // 1. Fetch passport countries
+                const passport = await travelService.getUserPassport(user!.uid);
+                const visited: any[] = [];
+                if (passport && passport.countries) {
+                    for (const [code, details] of Object.entries(passport.countries)) {
+                        if (details.status === "visited") {
+                            visited.push({ code, ...details });
+                        }
+                    }
+                }
+                setPassportCountries(visited);
+
+                // 2. Fetch documents for all trips
+                const docsList: any[] = [];
+                await Promise.all(
+                    trips.map(async (trip) => {
+                        try {
+                            const docs = await travelService.getTripDocuments(trip.id);
+                            docs.forEach(d => docsList.push({ ...d, tripName: trip.name }));
+                        } catch (e) {
+                            console.error(`Error loading docs for trip ${trip.id}:`, e);
+                        }
+                    })
+                );
+                setSavedDocuments(docsList);
+            } catch (err) {
+                console.error("Error fetching user profile stats:", err);
+            } finally {
+                setLoadingStats(false);
+            }
+        }
+        fetchStatsData();
+    }, [user, trips]);
 
     // Sheets & Modal states
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -43,7 +91,7 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
 
     React.useEffect(() => {
         if (user) {
-            const key = `stayfinder_passport_${user.uid}`;
+            const key = `catchme_passport_${user.uid}`;
             const stored = localStorage.getItem(key);
             if (stored) {
                 try {
@@ -58,7 +106,7 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
     const handleSavePassport = (newData: typeof passportData) => {
         setPassportData(newData);
         if (user) {
-            const key = `stayfinder_passport_${user.uid}`;
+            const key = `catchme_passport_${user.uid}`;
             localStorage.setItem(key, JSON.stringify(newData));
         }
     };
@@ -113,6 +161,103 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
     const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+    // Payment card state
+    const [savedCards, setSavedCards] = useState<Array<{
+        id: string;
+        fullNumber: string;   // full masked display number e.g. "4111111111111111"
+        lastFour: string;
+        holderName: string;
+        expiry: string;
+        network: string;
+        type: "credit" | "debit";
+    }>>(() => {
+        try {
+            const stored = typeof window !== "undefined" ? localStorage.getItem("catchme_cards") : null;
+            return stored ? JSON.parse(stored) : [];
+        } catch { return []; }
+    });
+    const [isAddingCard, setIsAddingCard] = useState(false);
+    const [editingCardId, setEditingCardId] = useState<string | null>(null);
+    const [revealedCardId, setRevealedCardId] = useState<string | null>(null);
+    const [confirmDeleteCard, setConfirmDeleteCard] = useState<string | null>(null); // holds card.id to delete
+    const [newCardNumber, setNewCardNumber] = useState("");
+    const [newCardHolder, setNewCardHolder] = useState("");
+    const [newCardExpiry, setNewCardExpiry] = useState("");
+    const [newCardType, setNewCardType] = useState<"credit" | "debit">("credit");
+    const [cardError, setCardError] = useState("");
+
+    // Helper: format card number for display (AMEX: 4-6-5, others: 4-4-4-4)
+    const formatCardDisplay = (num: string, reveal: boolean) => {
+        const raw = num.replace(/\s/g, "");
+        const isAmex = raw.startsWith("3");
+        if (!reveal) {
+            if (isAmex) return `•••• •••••• ${raw.slice(-5)}`;
+            return `•••• •••• •••• ${raw.slice(-4)}`;
+        }
+        if (isAmex) {
+            return `${raw.slice(0, 4)} ${raw.slice(4, 10)} ${raw.slice(10)}`;
+        }
+        return raw.replace(/(.{4})/g, "$1 ").trim();
+    };
+
+    // Helper: format input while typing (AMEX: 4-6-5, others: 4-4-4-4)
+    const formatCardInput = (raw: string) => {
+        const isAmex = raw.startsWith("3");
+        const max = isAmex ? 15 : 16;
+        const digits = raw.replace(/\D/g, "").slice(0, max);
+        if (isAmex) {
+            if (digits.length <= 4) return digits;
+            if (digits.length <= 10) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+            return `${digits.slice(0, 4)} ${digits.slice(4, 10)} ${digits.slice(10)}`;
+        }
+        return digits.replace(/(.{4})/g, "$1 ").trim();
+    };
+
+    const resetCardForm = () => {
+        setIsAddingCard(false);
+        setEditingCardId(null);
+        setNewCardNumber("");
+        setNewCardHolder("");
+        setNewCardExpiry("");
+        setNewCardType("credit");
+        setCardError("");
+    };
+
+    const handleCardSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const rawNum = newCardNumber.replace(/\s/g, "");
+        const isAmex = rawNum.startsWith("3");
+        const expectedLength = isAmex ? 15 : 16;
+        if (rawNum.length !== expectedLength) {
+            setCardError(`Las tarjetas ${isAmex ? "Amex" : "Visa/Mastercard"} tienen ${expectedLength} dígitos.`);
+            return;
+        }
+        if (!/^\d{2}\/\d{2}$/.test(newCardExpiry)) {
+            setCardError("La expiración debe tener formato MM/AA.");
+            return;
+        }
+        if (!newCardHolder.trim()) {
+            setCardError("Ingresa el nombre del titular.");
+            return;
+        }
+        const lastFour = rawNum.slice(-4);
+        const firstDigit = rawNum[0];
+        const network = firstDigit === "4" ? "visa" : firstDigit === "5" ? "mastercard" : firstDigit === "3" ? "amex" : "other";
+        let updated;
+        if (editingCardId) {
+            updated = savedCards.map(c => c.id === editingCardId
+                ? { ...c, fullNumber: rawNum, lastFour, holderName: newCardHolder.trim().toUpperCase(), expiry: newCardExpiry, network, type: newCardType }
+                : c
+            );
+        } else {
+            const newCard = { id: Date.now().toString(), fullNumber: rawNum, lastFour, holderName: newCardHolder.trim().toUpperCase(), expiry: newCardExpiry, network, type: newCardType };
+            updated = [...savedCards, newCard];
+        }
+        setSavedCards(updated);
+        try { localStorage.setItem("catchme_cards", JSON.stringify(updated)); } catch {}
+        resetCardForm();
+    };
+
     // Support Modal state
     const [isSupportOpen, setIsSupportOpen] = useState(false);
     const [feedbackType, setFeedbackType] = useState<"queja" | "sugerencia" | "bug">("sugerencia");
@@ -132,11 +277,11 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
 
         const typeLabel = feedbackType === "queja" ? "Queja" : feedbackType === "bug" ? "Reportar Bug" : "Sugerencia de Mejora";
         const email = "facundomatiasrios108@gmail.com";
-        const subject = encodeURIComponent(`StayFinder - Soporte (${typeLabel})`);
+        const subject = encodeURIComponent(`CatchMe - Soporte (${typeLabel})`);
         
         const bodyText = `Hola Facundo,
 
-Tengo una consulta/comentario sobre StayFinder:
+Tengo una consulta/comentario sobre CatchMe:
 
 Tipo: ${typeLabel}
 Usuario: ${displayName} (${user?.email || "Sin email"})
@@ -188,17 +333,30 @@ Saludos!`;
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-3 px-6 mb-8">
-                <div className="flex flex-col items-center justify-center bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-2xl p-5 border border-[#1877F2]/10 transition-colors hover:bg-[#1877F2]/10 dark:hover:bg-[#1877F2]/20 cursor-pointer">
-                    <p className="text-[#1877F2] text-2xl font-black">{tripsCount}</p>
+            <div className="grid grid-cols-3 gap-3 px-6 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div 
+                    onClick={() => setActiveStatDetail("trips")}
+                    className="flex flex-col items-center justify-center bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl p-5 border border-blue-500/10 transition-all hover:bg-blue-500/10 dark:hover:bg-blue-500/20 active:scale-95 cursor-pointer shadow-sm"
+                >
+                    <p className="text-blue-500 dark:text-blue-400 text-2xl font-black">{tripsCount}</p>
                     <p className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-1 text-center leading-tight">Viajes<br />Planeados</p>
                 </div>
-                <div className="flex flex-col items-center justify-center bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-2xl p-5 border border-[#1877F2]/10 transition-colors hover:bg-[#1877F2]/10 dark:hover:bg-[#1877F2]/20 cursor-pointer">
-                    <p className="text-[#1877F2] text-2xl font-black">{countriesVisited}</p>
+                <div 
+                    onClick={() => setActiveStatDetail("countries")}
+                    className="flex flex-col items-center justify-center bg-emerald-500/5 dark:bg-emerald-500/10 rounded-2xl p-5 border border-emerald-500/10 transition-all hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 active:scale-95 cursor-pointer shadow-sm"
+                >
+                    <p className="text-emerald-500 dark:text-emerald-400 text-2xl font-black">
+                        {!loadingStats ? passportCountries.length : countriesVisited}
+                    </p>
                     <p className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-1 text-center leading-tight">Países<br />Visitados</p>
                 </div>
-                <div className="flex flex-col items-center justify-center bg-[#1877F2]/5 dark:bg-[#1877F2]/10 rounded-2xl p-5 border border-[#1877F2]/10 transition-colors hover:bg-[#1877F2]/10 dark:hover:bg-[#1877F2]/20 cursor-pointer">
-                    <p className="text-[#1877F2] text-2xl font-black">{docsSaved}</p>
+                <div 
+                    onClick={() => setActiveStatDetail("docs")}
+                    className="flex flex-col items-center justify-center bg-indigo-500/5 dark:bg-indigo-500/10 rounded-2xl p-5 border border-indigo-500/10 transition-all hover:bg-indigo-500/10 dark:hover:bg-indigo-500/20 active:scale-95 cursor-pointer shadow-sm"
+                >
+                    <p className="text-indigo-500 dark:text-indigo-400 text-2xl font-black">
+                        {!loadingStats ? savedDocuments.length : docsSaved}
+                    </p>
                     <p className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-1 text-center leading-tight">Docs<br />Guardados</p>
                 </div>
             </div>
@@ -347,29 +505,276 @@ Saludos!`;
             {/* MODAL 3: METODOS DE PAGO */}
             {isPaymentsOpen && (
                 <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden p-6 animate-in slide-in-from-bottom-6 sm:fade-in duration-300">
-                        <div className="flex justify-between items-center pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
-                            <h3 className="text-lg font-black">Métodos de Pago</h3>
-                            <button onClick={() => setIsPaymentsOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400"><X size={18} /></button>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:fade-in duration-300">
+                        {/* Header */}
+                        <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+                            <h3 className="text-lg font-black">
+                                {(isAddingCard || editingCardId) ? (editingCardId ? "Editar Tarjeta" : "Nueva Tarjeta") : "Métodos de Pago"}
+                            </h3>
+                            <button
+                                onClick={() => { setIsPaymentsOpen(false); resetCardForm(); setRevealedCardId(null); }}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
-                        <div className="space-y-4">
-                            <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-5 rounded-2xl border border-slate-700/50 shadow-md relative overflow-hidden">
-                                <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-white/5 rounded-full"></div>
-                                <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Tarjeta Virtual / Visa</p>
-                                <h4 className="text-xl font-bold mt-4 tracking-wider">•••• •••• •••• 4892</h4>
-                                <div className="flex justify-between items-center mt-6">
-                                    <span className="text-xs font-medium text-slate-400">StayFinder Premium</span>
-                                    <span className="text-xs font-bold">12/29</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-sm font-bold cursor-pointer hover:border-blue-500 hover:text-blue-500 transition-colors">
-                                <span>+ Agregar Tarjeta de Crédito</span>
-                            </div>
+
+                        <div className="px-6 pb-6 max-h-[75vh] overflow-y-auto">
+                            {/* ── CARD LIST VIEW ── */}
+                            {!isAddingCard && !editingCardId && (<>
+                                {savedCards.length > 0 && (
+                                    <div className="space-y-3 mt-5">
+                                        {savedCards.map((card) => {
+                                            const isRevealed = revealedCardId === card.id;
+                                            // Legacy cards (saved before fullNumber was stored) only have lastFour
+                                            const hasFullNumber = card.fullNumber && card.fullNumber.length > 4;
+                                            const displayNum = hasFullNumber
+                                                ? (isRevealed
+                                                    ? formatCardDisplay(card.fullNumber, true)
+                                                    : formatCardDisplay(card.fullNumber, false))
+                                                : (card.network === "amex"
+                                                    ? `•••• •••••• ${card.lastFour.slice(-5)}`
+                                                    : `•••• •••• •••• ${card.lastFour}`);
+                                            return (
+                                                <div key={card.id}>
+                                                    {/* Card face */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (!hasFullNumber) return;
+                                                            setRevealedCardId(isRevealed ? null : card.id);
+                                                        }}
+                                                        className={`w-full text-left bg-gradient-to-br from-slate-800 to-slate-950 text-white p-5 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden transition-transform ${hasFullNumber ? "active:scale-[0.98] cursor-pointer" : "cursor-default"}`}
+                                                    >
+                                                        {/* Network watermark — bottom-right, not a circle */}
+                                                        <span className="absolute right-5 bottom-3 opacity-10 text-6xl font-black italic pointer-events-none select-none">
+                                                            {card.network === "visa" ? "VISA" : card.network === "mastercard" ? "MC" : card.network === "amex" ? "AMEX" : ""}
+                                                        </span>
+                                                        <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                                            {card.network.toUpperCase()} • {card.type === "credit" ? "Crédito" : "Débito"}
+                                                        </p>
+                                                        <h4 className="text-lg font-bold mt-3 tracking-[0.12em] font-mono transition-all duration-200">
+                                                            {displayNum}
+                                                        </h4>
+                                                        <div className="flex justify-between items-center mt-5">
+                                                            <span className="text-xs font-semibold text-slate-300">{card.holderName}</span>
+                                                            <span className="text-xs font-bold">{card.expiry}</span>
+                                                        </div>
+                                                        {/* Reveal hint */}
+                                                        {hasFullNumber && (
+                                                            <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                                                {isRevealed ? "Toca para ocultar" : "Toca para ver número completo"}
+                                                            </p>
+                                                        )}
+                                                        {!hasFullNumber && (
+                                                            <p className="mt-2 text-[10px] font-medium text-slate-600">
+                                                                Editá la tarjeta para guardar el número completo
+                                                            </p>
+                                                        )}
+                                                    </button>
+
+                                                    {/* Edit / Delete buttons */}
+                                                    <div className="flex gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingCardId(card.id);
+                                                                setNewCardNumber(hasFullNumber ? formatCardDisplay(card.fullNumber, true) : "");
+                                                                setNewCardHolder(card.holderName);
+                                                                setNewCardExpiry(card.expiry);
+                                                                setNewCardType(card.type);
+                                                                setCardError("");
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition active:scale-95"
+                                                        >
+                                                            <Edit2 size={13} /> Editar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setConfirmDeleteCard(card.id)}
+                                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-500 dark:hover:text-rose-400 transition active:scale-95"
+                                                        >
+                                                            <Trash2 size={13} /> Eliminar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {/* Empty state */}
+                                {savedCards.length === 0 && (
+                                    <div className="mt-6 text-center py-8 text-slate-400 dark:text-slate-500">
+                                        <div className="text-4xl mb-3">💳</div>
+                                        <p className="text-sm font-semibold">No tienes tarjetas guardadas</p>
+                                        <p className="text-xs mt-1 opacity-70">Agrega una para comenzar</p>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => { setIsAddingCard(true); setEditingCardId(null); }}
+                                    className="mt-4 flex items-center justify-center gap-2 w-full p-4 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-sm font-bold cursor-pointer hover:border-blue-500 hover:text-blue-500 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors active:scale-[0.98]"
+                                >
+                                    <span className="text-lg">+</span>
+                                    <span>Agregar Tarjeta</span>
+                                </button>
+                            </>)}
+
+                            {/* ── ADD / EDIT FORM ── */}
+                            {(isAddingCard || editingCardId) && (
+                                <form onSubmit={handleCardSubmit} className="mt-5 space-y-4">
+                                    {/* Live card preview */}
+                                    <div className="bg-gradient-to-br from-slate-800 to-slate-950 text-white p-5 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden relative">
+                                        <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-white/5 rounded-full pointer-events-none" />
+                                        <div className="absolute right-5 bottom-4 opacity-20 text-5xl font-black italic pointer-events-none select-none">
+                                            {(() => {
+                                                const d = newCardNumber.replace(/\s/g, "")[0];
+                                                return d === "4" ? "VISA" : d === "5" ? "MC" : d === "3" ? "AMEX" : "💳";
+                                            })()}
+                                        </div>
+                                        <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                            {(() => {
+                                                const d = newCardNumber.replace(/\s/g, "")[0];
+                                                const net = d === "4" ? "VISA" : d === "5" ? "MASTERCARD" : d === "3" ? "AMEX" : "TARJETA";
+                                                const t = newCardType === "credit" ? "Crédito" : "Débito";
+                                                return `${net} • ${t}`;
+                                            })()}
+                                        </p>
+                                        <h4 className="text-lg font-bold mt-3 tracking-[0.12em] font-mono min-h-[28px]">
+                                            {newCardNumber || "•••• •••• •••• ••••"}
+                                        </h4>
+                                        <div className="flex justify-between items-center mt-5">
+                                            <span className="text-xs font-semibold text-slate-300">{newCardHolder || "TITULAR"}</span>
+                                            <span className="text-xs font-bold">{newCardExpiry || "MM/AA"}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card number */}
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Número de Tarjeta</label>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={19}
+                                            placeholder="1234 5678 9012 3456"
+                                            value={newCardNumber}
+                                            onChange={(e) => {
+                                                setNewCardNumber(formatCardInput(e.target.value));
+                                                setCardError("");
+                                            }}
+                                            required
+                                            className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold tracking-widest focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition text-slate-900 dark:text-white placeholder:font-normal placeholder:tracking-normal"
+                                        />
+                                        <p className="text-[10px] text-slate-400 mt-1 ml-1">
+                                            {newCardNumber.replace(/\s/g, "").startsWith("3") ? "AMEX: 15 dígitos (4-6-5)" : "Visa / Mastercard: 16 dígitos (4-4-4-4)"}
+                                        </p>
+                                    </div>
+
+                                    {/* Holder name */}
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Titular</label>
+                                        <input
+                                            type="text"
+                                            placeholder="JUAN PEREZ"
+                                            value={newCardHolder}
+                                            onChange={(e) => { setNewCardHolder(e.target.value.toUpperCase()); setCardError(""); }}
+                                            required
+                                            className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold tracking-widest focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition text-slate-900 dark:text-white placeholder:font-normal placeholder:tracking-normal"
+                                        />
+                                    </div>
+
+                                    {/* Expiry + type */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Vencimiento</label>
+                                            <input
+                                                type="text"
+                                                placeholder="MM/AA"
+                                                maxLength={5}
+                                                value={newCardExpiry}
+                                                onChange={(e) => {
+                                                    let val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                                                    if (val.length >= 3) val = val.slice(0, 2) + "/" + val.slice(2);
+                                                    setNewCardExpiry(val);
+                                                    setCardError("");
+                                                }}
+                                                required
+                                                className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition text-slate-900 dark:text-white"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Tipo</label>
+                                            <select
+                                                value={newCardType}
+                                                onChange={(e) => setNewCardType(e.target.value as "credit" | "debit")}
+                                                className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition text-slate-900 dark:text-white"
+                                            >
+                                                <option value="credit">Crédito</option>
+                                                <option value="debit">Débito</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Error */}
+                                    {cardError && (
+                                        <p className="text-xs font-bold text-rose-500 flex items-center gap-1.5">
+                                            <span>⚠️</span> {cardError}
+                                        </p>
+                                    )}
+
+                                    {/* Form actions */}
+                                    <div className="grid grid-cols-2 gap-3 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={resetCardForm}
+                                            className="py-3 font-bold rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-sm active:scale-95"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="py-3 font-bold rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:from-blue-600 hover:to-indigo-700 transition text-sm active:scale-95"
+                                        >
+                                            {editingCardId ? "Actualizar" : "Guardar"}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
-                        <button onClick={() => setIsPaymentsOpen(false)} className="w-full mt-6 py-3 font-bold rounded-xl bg-blue-500 text-white">Listo</button>
+
+                        {/* Footer */}
+                        {!isAddingCard && !editingCardId && (
+                            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+                                <button
+                                    onClick={() => { setIsPaymentsOpen(false); setRevealedCardId(null); }}
+                                    className="w-full py-3 font-bold rounded-xl bg-blue-500 hover:bg-blue-600 text-white transition active:scale-95"
+                                >
+                                    Listo
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
+
+
+            {/* CONFIRM DELETE CARD */}
+            <ConfirmDialog
+                isOpen={!!confirmDeleteCard}
+                onClose={() => setConfirmDeleteCard(null)}
+                onConfirm={() => {
+                    if (!confirmDeleteCard) return;
+                    if (revealedCardId === confirmDeleteCard) setRevealedCardId(null);
+                    const updated = savedCards.filter(c => c.id !== confirmDeleteCard);
+                    setSavedCards(updated);
+                    try { localStorage.setItem("catchme_cards", JSON.stringify(updated)); } catch {}
+                    setConfirmDeleteCard(null);
+                }}
+                title="Eliminar tarjeta"
+                message={`¿Seguro que quieres eliminar la tarjeta terminada en ${savedCards.find(c => c.id === confirmDeleteCard)?.lastFour ?? ""}? Esta acción no se puede deshacer.`}
+                confirmText="Sí, eliminar"
+                cancelText="Cancelar"
+                variant="danger"
+            />
 
             {/* MODAL 4: SETTINGS */}
             {isSettingsOpen && (
@@ -383,7 +788,7 @@ Saludos!`;
                             <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-xl">
                                 <div>
                                     <h4 className="text-sm font-bold">Versión de App</h4>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">StayFinder v2.4.1 Premium</p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">CatchMe v2.4.1 Premium</p>
                                 </div>
                                 <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] uppercase font-extrabold px-2.5 py-1 rounded-md border border-blue-200/50">Actualizado</span>
                             </div>
@@ -775,6 +1180,120 @@ Saludos!`;
                                     Guardar y Ver
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Stats Detail Modal */}
+            {activeStatDetail && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:fade-in duration-300">
+                        {/* Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60 flex justify-between items-center bg-white dark:bg-slate-900 sticky top-0 z-10">
+                            <div className="flex items-center gap-2">
+                                {activeStatDetail === "trips" && <Calendar className="text-blue-500" size={20} />}
+                                {activeStatDetail === "countries" && <Globe className="text-emerald-500" size={20} />}
+                                {activeStatDetail === "docs" && <FileText className="text-indigo-500" size={20} />}
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                                    {activeStatDetail === "trips" && "Viajes Planeados"}
+                                    {activeStatDetail === "countries" && "Países Visitados"}
+                                    {activeStatDetail === "docs" && "Documentos Guardados"}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setActiveStatDetail(null)}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* List Content */}
+                        <div className="p-6 max-h-[50vh] overflow-y-auto space-y-3 scrollbar-thin">
+                            {activeStatDetail === "trips" && (
+                                trips.length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">No tienes viajes planeados aún.</p>
+                                ) : (
+                                    trips.map(trip => (
+                                        <div 
+                                            key={trip.id} 
+                                            onClick={() => { window.location.href = `/trip/${trip.id}`; }}
+                                            className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-850 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 cursor-pointer transition-all active:scale-[0.98] group"
+                                        >
+                                            <div className="flex flex-col min-w-0 pr-4">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{trip.name}</span>
+                                                <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{trip.destination}</span>
+                                            </div>
+                                            <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                        </div>
+                                    ))
+                                )
+                            )}
+
+                            {activeStatDetail === "countries" && (
+                                loadingStats ? (
+                                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>
+                                ) : passportCountries.length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">No has marcado países visitados en tu mapa.</p>
+                                ) : (
+                                    passportCountries.map(pc => {
+                                        const cMeta = countriesList.find(c => c.id === pc.code);
+                                        return (
+                                            <div 
+                                                key={pc.code} 
+                                                className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-850"
+                                            >
+                                                <span className="text-2xl">{cMeta?.flag || "🏳️"}</span>
+                                                <div className="flex flex-col min-w-0 flex-1">
+                                                    <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{cMeta?.spanishName || pc.code}</span>
+                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5">Código: {pc.code}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )
+                            )}
+
+                            {activeStatDetail === "docs" && (
+                                loadingStats ? (
+                                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-indigo-500 animate-spin" /></div>
+                                ) : savedDocuments.length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">No tienes documentos guardados.</p>
+                                ) : (
+                                    savedDocuments.map(doc => (
+                                        <div 
+                                            key={doc.id} 
+                                            onClick={() => {
+                                                // If it's a real external URL, open it directly
+                                                if (doc.url && !doc.url.startsWith("localcache_") && (doc.url.startsWith("http") || doc.url.startsWith("data:"))) {
+                                                    window.open(doc.url, "_blank");
+                                                } else {
+                                                    // For local-cached or Firestore docs, navigate to the trip's docs page
+                                                    window.location.href = `/trip/${doc.tripId}/docs`;
+                                                }
+                                            }}
+                                            className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-850 hover:bg-slate-100/50 dark:hover:bg-slate-800/80 cursor-pointer transition-all active:scale-[0.98] group"
+                                        >
+                                            <div className="flex flex-col min-w-0 pr-4">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{doc.title}</span>
+                                                <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{doc.type} • Viaje: {doc.tripName}</span>
+                                            </div>
+                                            <ChevronRight size={16} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                        </div>
+                                    ))
+                                )
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end">
+                            <button
+                                onClick={() => setActiveStatDetail(null)}
+                                className="font-bold px-5 py-2.5 rounded-full text-slate-700 dark:text-slate-350 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 text-xs"
+                            >
+                                Cerrar
+                            </button>
                         </div>
                     </div>
                 </div>

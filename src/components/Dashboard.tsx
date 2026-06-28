@@ -4,19 +4,21 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { travelService } from "@/lib/services";
 import { Trip } from "@/types/travel";
-import { CalendarDays, Wallet, User, Plus, Loader2, Bell, Briefcase } from "lucide-react";
+import { CalendarDays, Wallet, User, Plus, Loader2, Bell, Briefcase, Globe } from "lucide-react";
 import EmptyState from "./EmptyState";
 import TripList from "./TripList";
 import AddTrip from "./AddTrip";
 import { ThemeToggle } from "./ThemeToggle";
 import UserProfile from "./UserProfile";
 import TravelTools from "./TravelTools";
+import { Logo } from "./Logo";
+import MundoTab from "./MundoTab";
 
 export default function Dashboard() {
     const { user, signOut } = useAuth();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<"home" | "ai" | "docs" | "profile">("home");
+    const [activeTab, setActiveTab] = useState<"home" | "mundo" | "ai" | "docs" | "profile">("home");
     const [isAddingTrip, setIsAddingTrip] = useState(false);
     const [indexErrorLink, setIndexErrorLink] = useState<string | null>(null);
 
@@ -46,34 +48,30 @@ export default function Dashboard() {
 
     // Handle deep links from TripBottomNav (e.g., coming back from /trip/[id]/docs)
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            const tabUrl = params.get("tab");
-            if (tabUrl === "profile" || tabUrl === "docs" || tabUrl === "home" || tabUrl === "ai") {
-                setActiveTab(tabUrl as any);
-            }
-            
-            const handlePopState = () => {
-                const currentParams = new URLSearchParams(window.location.search);
-                const currentTab = currentParams.get("tab");
-                if (currentTab === "profile" || currentTab === "docs" || currentTab === "home" || currentTab === "ai") {
-                    setActiveTab(currentTab as any);
-                } else {
-                    setActiveTab("home");
-                }
-            };
-            
-            window.addEventListener("popstate", handlePopState);
-            return () => window.removeEventListener("popstate", handlePopState);
+        const params = new URLSearchParams(window.location.search);
+        const tabUrl = params.get("tab");
+        if (tabUrl === "profile" || tabUrl === "docs" || tabUrl === "home" || tabUrl === "ai" || tabUrl === "mundo") {
+            setActiveTab(tabUrl as any);
         }
+
+        const handlePopState = () => {
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentTab = currentParams.get("tab");
+            if (currentTab === "profile" || currentTab === "docs" || currentTab === "home" || currentTab === "ai" || currentTab === "mundo") {
+                setActiveTab(currentTab as any);
+            } else {
+                setActiveTab("home");
+            }
+        };
+
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
     }, []);
 
-    const handleTabChange = useCallback((tab: "home" | "ai" | "docs" | "profile") => {
+    const handleTabChange = useCallback((tab: "home" | "mundo" | "ai" | "docs" | "profile") => {
         setActiveTab(tab);
-        if (typeof window !== "undefined") {
-            const newUrl = tab === "home" ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
-            window.history.pushState({ path: newUrl }, '', newUrl);
-        }
+        const newUrl = tab === "home" ? window.location.pathname : `${window.location.pathname}?tab=${tab}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
     }, []);
 
     const handleTripCreated = useCallback(() => {
@@ -125,12 +123,21 @@ export default function Dashboard() {
         <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-[430px]">
             {/* Modern Header */}
             {activeTab !== "profile" && (
-                <header className="sticky top-0 z-10 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 glass shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-[1.1rem] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25 transition-transform duration-200 hover:scale-105">
-                            SF
-                        </div>
-                        <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 bg-clip-text text-transparent tracking-tight">StayFinder</h1>
+                <header className="sticky top-0 z-10 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm transition-all duration-200">
+                    <div className="flex items-center gap-2.5">
+                        <Logo size={36} />
+                        {activeTab === "home" && (
+                            <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 bg-clip-text text-transparent tracking-tight">CatchMe</h1>
+                        )}
+                        {activeTab === "mundo" && (
+                            <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 bg-clip-text text-transparent tracking-tight">Mundo</h1>
+                        )}
+                        {activeTab === "ai" && (
+                            <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 bg-clip-text text-transparent tracking-tight">Herramientas</h1>
+                        )}
+                        {activeTab === "docs" && (
+                            <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 bg-clip-text text-transparent tracking-tight">Documentos</h1>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
@@ -143,7 +150,7 @@ export default function Dashboard() {
 
             <main className="flex-1 w-full pb-24">
                 {activeTab === "home" && (
-                    <div className="px-6">
+                    <div className="px-6 pt-4">
                         {trips.length === 0 ? (
                             <div className="pt-2">
                                 <EmptyState onAdd={() => setIsAddingTrip(true)} />
@@ -161,6 +168,12 @@ export default function Dashboard() {
                                 <Plus size={28} className="transition-transform group-hover:rotate-90" />
                             </button>
                         )}
+                    </div>
+                )}
+
+                {activeTab === "mundo" && (
+                    <div className="px-6 pt-4 pb-12">
+                        <MundoTab trips={trips} />
                     </div>
                 )}
 
@@ -212,6 +225,15 @@ export default function Dashboard() {
                         <CalendarDays size={20} strokeWidth={activeTab === "home" ? 2.5 : 2} />
                         <span className="text-[9px] font-bold">Viajes</span>
                         {activeTab === "home" && <div className="w-1 h-1 bg-blue-500 rounded-full mt-0.5"></div>}
+                    </button>
+
+                    <button
+                        onClick={() => handleTabChange("mundo")}
+                        className={`flex flex-col items-center gap-1 w-16 transition-all duration-300 ${activeTab === "mundo" ? "text-emerald-550 dark:text-emerald-400 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
+                    >
+                        <Globe size={20} strokeWidth={activeTab === "mundo" ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold">Mundo</span>
+                        {activeTab === "mundo" && <div className="w-1 h-1 bg-emerald-500 rounded-full mt-0.5"></div>}
                     </button>
 
                     <button

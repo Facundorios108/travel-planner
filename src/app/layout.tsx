@@ -9,14 +9,9 @@ import { Viewport } from 'next';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StayFinder - Tu Planificador de Viajes con IA",
+  title: "CatchMe - Tu Pasaporte y Planificador de Viajes",
   description: "Diseña itinerarios inteligentes, gestiona tus documentos y controla tus gastos de viaje en un solo lugar.",
   manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "StayFinder",
-  },
 };
 
 export const viewport: Viewport = {
@@ -34,7 +29,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen pb-16`}>
+      <head>
+        {/* Apple PWA tags — inline to avoid Next.js 16 MetadataWrapper hydration bug */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="CatchMe" />
+      </head>
+      <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen pb-16`} suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider
             attribute="class"

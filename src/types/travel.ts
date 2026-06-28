@@ -72,3 +72,19 @@ export interface TripDocument {
     url?: string; // e.g., URL to an image or PDF
     createdAt?: Date;
 }
+
+export type PassportCountryStatus = "visited" | "want_to_go" | "lived";
+
+export interface PassportCountry {
+    countryCode: string; // ISO numeric code (e.g. "032")
+    status: PassportCountryStatus;
+    color?: string; // Custom map color
+    dates?: { startDate: string; endDate?: string }[];
+    tripId?: string; // Linked trip ID
+}
+
+export interface UserPassport {
+    userId: string;
+    countries: Record<string, PassportCountry>;
+    updatedAt: Date;
+}

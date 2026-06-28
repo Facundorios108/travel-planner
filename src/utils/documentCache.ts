@@ -1,4 +1,4 @@
-export const DB_NAME = 'StayFinderDocs';
+export const DB_NAME = 'CatchMeDocs';
 export const STORE_NAME = 'documents';
 export const DB_VERSION = 1;
 

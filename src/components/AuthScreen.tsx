@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { Plane } from "lucide-react";
+import Logo from "./Logo";
 import Onboarding from "./Onboarding";
 
 export default function AuthScreen() {
@@ -60,8 +60,8 @@ export default function AuthScreen() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50 dark:bg-slate-950 transition-colors">
             <div className="w-full max-w-md p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center transition-colors">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mb-6">
-                    <Plane size={32} />
+                <div className="mb-6">
+                    <Logo size={80} />
                 </div>
 
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-center">
