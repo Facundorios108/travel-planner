@@ -59,7 +59,10 @@ export default function WorldMap({
   };
 
   return (
-    <div className="relative w-full h-[320px] bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 rounded-[2.5rem] overflow-hidden shadow-inner animate-in fade-in zoom-in-95 duration-500 select-none">
+    <div 
+      className="relative w-full h-[320px] bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 rounded-[2.5rem] overflow-hidden shadow-inner animate-in fade-in zoom-in-95 duration-500 select-none"
+      style={{ touchAction: 'none' }}
+    >
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{ scale: 110 }}

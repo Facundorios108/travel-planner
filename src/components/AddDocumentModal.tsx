@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useToast } from "./Toast";
 import { X, FileText, Ticket, Bed, IdCard, Train, Car, Link as LinkIcon, Upload } from "lucide-react";
 import { DocumentType } from "@/types/travel";
-import { saveDocumentToCache } from "@/utils/documentCache";
+import { travelService } from "@/lib/services";
 
 interface AddDocumentModalProps {
     isOpen: boolean;
@@ -157,10 +157,15 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
                                         const reader = new FileReader();
                                         reader.onload = async (event) => {
                                             const base64String = event.target?.result as string;
-                                            // Guardar el string en IndexedDB
-                                            const fileId = `localcache_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-                                            await saveDocumentToCache(fileId, base64String);
-                                            setUrl(fileId);
+                                            try {
+                                                const fileName = `documents/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                                                const downloadUrl = await travelService.uploadFile(fileName, base64String);
+                                                setUrl(downloadUrl);
+                                                showToast("Archivo adjuntado correctamente", "success");
+                                            } catch (err) {
+                                                console.error("Error uploading file", err);
+                                                showToast("Error al subir el archivo", "error");
+                                            }
                                         };
                                         reader.readAsDataURL(file);
                                     }}
@@ -174,18 +179,18 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
                                 </div>
                                 <input
                                     type="text"
-                                    value={url.startsWith('localcache_') || url.startsWith('data:') ? 'Archivo adjuntado correctamente ✓' : url}
+                                    value={url.includes('firebasestorage.googleapis.com') ? 'Archivo adjuntado correctamente ✓' : url}
                                     onChange={(e) => {
-                                        if (!url.startsWith('localcache_') && !url.startsWith('data:')) {
+                                        if (!url.includes('firebasestorage.googleapis.com')) {
                                             setUrl(e.target.value);
                                         }
                                     }}
-                                    readOnly={url.startsWith('localcache_') || url.startsWith('data:')}
+                                    readOnly={url.includes('firebasestorage.googleapis.com')}
                                     placeholder="O pega un enlace (ej. Google Drive)"
-                                    className={`w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl pl-12 pr-5 py-4 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 ${url.startsWith('localcache_') || url.startsWith('data:') ? 'text-green-600 dark:text-green-400 font-bold border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/10' : ''}`}
+                                    className={`w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl pl-12 pr-5 py-4 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 ${url.includes('firebasestorage.googleapis.com') ? 'text-green-600 dark:text-green-400 font-bold border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/10' : ''}`}
                                 />
                             </div>
-                            {(url.startsWith("localcache_") || url.startsWith("data:")) && (
+                            {url.includes('firebasestorage.googleapis.com') && (
                                 <button
                                     type="button"
                                     onClick={() => setUrl("")}

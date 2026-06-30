@@ -589,8 +589,8 @@ export default function TravelTools({ trips }: TravelToolsProps) {
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
-                    // Caché de 3 horas para la cotización de divisas en Argentina
-                    if (Date.now() - parsed.fetchedAt < 10800000) {
+                    // Caché de 5 minutos para la altísima volatilidad de Argentina
+                    if (Date.now() - parsed.fetchedAt < 300000) {
                         setArgentineRates(parsed.data);
                         return;
                     }
@@ -1210,7 +1210,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                             textCol = "text-indigo-600 dark:text-indigo-300";
                                         } else {
                                             title = "Dólar BNA";
-                                            desc = "Oficial Banco";
+                                            desc = "Banco Nación";
                                         }
 
                                         return (

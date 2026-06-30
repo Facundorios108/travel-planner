@@ -1,4 +1,4 @@
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import {
     collection,
     addDoc,
@@ -15,10 +15,17 @@ import {
     deleteField,
     setDoc,
 } from "firebase/firestore";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { Trip, Activity, Destination, Expense, UserSettings, UserPassport, PassportCountry } from "@/types/travel";
 import { dataCache, cacheKeys } from "@/utils/dataCache";
 
 export const travelService = {
+    // Storage
+    async uploadFile(path: string, base64Data: string): Promise<string> {
+        const storageRef = ref(storage, path);
+        await uploadString(storageRef, base64Data, 'data_url');
+        return await getDownloadURL(storageRef);
+    },
     // User Profile
     async saveUserProfile(userId: string, email: string | null, displayName: string | null): Promise<void> {
         if (!email) return;

@@ -2,6 +2,7 @@ import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 import { getAuth, Auth } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, Firestore, getFirestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -31,6 +32,7 @@ const app: FirebaseApp = getApps().length === 0
     : getApps()[0];
 
 const auth: Auth = getAuth(app);
+const storage: FirebaseStorage = getStorage(app);
 
 // Use persistent cache only on the client-side (browser) to avoid server-side/edge crashes during SSR
 const db: Firestore = typeof window === "undefined"
@@ -49,4 +51,4 @@ if (typeof window !== "undefined") {
     });
 }
 
-export { app, auth, db, analytics };
+export { app, auth, db, analytics, storage };
