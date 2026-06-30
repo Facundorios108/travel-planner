@@ -34,8 +34,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="CatchMe" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
-        <link rel="icon" href="/icon.png?v=2" />
+        <link rel="apple-touch-icon" href="/apple-icon-catchme.png" />
+        <link rel="icon" href="/icon-catchme.png" />
       </head>
       <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen pb-16`} suppressHydrationWarning>
         <AuthProvider>

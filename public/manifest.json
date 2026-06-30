@@ -8,12 +8,12 @@
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "/icon.png?v=2",
+      "src": "/icon-catchme.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/icon512_maskable.png?v=2",
+      "src": "/icon512_maskable-catchme.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
