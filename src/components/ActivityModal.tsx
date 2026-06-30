@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { X, PlaneLanding, Car, Activity as ActivityIcon, Calendar, MapPin, MoreHorizontal } from "lucide-react";
 import { Activity, ActivityType, Destination } from "@/types/travel";
 import { format } from "date-fns";
@@ -22,8 +23,10 @@ const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: React.ReactNode
 ];
 
 export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, existingActivity, defaultDate }: ActivityModalProps) {
+    useLockBodyScroll(isOpen);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [location, setLocation] = useState("");
     const [type, setType] = useState<ActivityType>("activity");
     const [destinationId, setDestinationId] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -35,6 +38,7 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
         if (existingActivity) {
             setTitle(existingActivity.title);
             setDescription(existingActivity.description || "");
+            setLocation(existingActivity.location || "");
             setType(existingActivity.type || "activity");
             setDestinationId(existingActivity.destinationId || (destinations.length > 0 ? destinations[0].id : ""));
             // Format datetime-local requires YYYY-MM-DDThh:mm format
@@ -43,6 +47,7 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
         } else {
             setTitle("");
             setDescription("");
+            setLocation("");
             setType("activity");
             setDestinationId(destinations.length > 0 ? destinations[0].id : "");
             if (defaultDate) {
@@ -72,6 +77,7 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                 destinationId,
                 title,
                 description,
+                location,
                 type,
                 startDate: new Date(startDate),
             };
@@ -141,6 +147,18 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                                 placeholder="Ej: Vuelo Madrid-Paris, Tour Coliseo..."
                                 className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 required
+                            />
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Ubicación / Dirección exacta <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
+                            <input
+                                type="text"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                placeholder="Ej: 7-Eleven Honolulu, Torre Eiffel..."
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                             />
                         </div>
 

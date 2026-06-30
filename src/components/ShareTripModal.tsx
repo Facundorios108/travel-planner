@@ -1,4 +1,6 @@
 "use client";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+
 
 import { useState, useEffect } from "react";
 import { X, Users, Mail, Loader2, Check, Trash2, Link as LinkIcon, Copy } from "lucide-react";
@@ -15,6 +17,7 @@ interface ShareTripModalProps {
 }
 
 export function ShareTripModal({ isOpen, onClose, trip, onTripUpdate }: ShareTripModalProps) {
+    useLockBodyScroll(isOpen);
     const { user } = useAuth();
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);

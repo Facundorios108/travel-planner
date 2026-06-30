@@ -117,7 +117,11 @@ export default function TripList({ trips }: { trips: Trip[] }) {
             </div>
 
             <div className="space-y-6">
-                {trips.map((trip) => (
+                {[...trips].sort((a, b) => {
+                    const dateA = a.startDate ? new Date(a.startDate).getTime() : new Date(a.createdAt).getTime();
+                    const dateB = b.startDate ? new Date(b.startDate).getTime() : new Date(b.createdAt).getTime();
+                    return dateA - dateB;
+                }).map((trip) => (
                     <TripCard 
                         key={trip.id} 
                         trip={trip} 

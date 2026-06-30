@@ -7,7 +7,7 @@ import { Trip, Expense, ExpenseCategory } from "@/types/travel";
 import TripBottomNav from "@/components/TripBottomNav";
 import AddExpenseModal from "@/components/AddExpenseModal";
 import { format, startOfDay, eachDayOfInterval, isSameDay } from "date-fns";
-import { ArrowLeft, TrendingUp, Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, CreditCard, Filter, Plus, Loader2, PieChart as PieChartIcon, BarChart3, Edit2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, TrendingUp, Plane, Bed, Utensils, CarTaxiFront, ShoppingBag, Ticket, CreditCard, Filter, Plus, Loader2, PieChart as PieChartIcon, BarChart3, Edit2, AlertTriangle, Users, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AuthScreen from "@/components/AuthScreen";
 import { useToast } from "@/components/Toast";
@@ -41,7 +41,7 @@ export default function ExpensesPage() {
     const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
     const [activeFilter, setActiveFilter] = useState<string>("all");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<"list" | "analytics">("list");
+    const [activeTab, setActiveTab] = useState<"list" | "analytics" | "balances">("list");
 
     // Budget Editor states
     const [isEditingBudget, setIsEditingBudget] = useState(false);
@@ -233,6 +233,54 @@ export default function ExpensesPage() {
         })).sort((a, b) => b.amount - a.amount);
     }, [expenses, participants, trip]);
 
+    const settlementData = useMemo(() => {
+        const balances: Record<string, number> = {};
+        participants.forEach(p => { balances[p] = 0; });
+        
+        // Exclude personal expenses from splitting logic
+        const sharedExpenses = expenses.filter(e => !e.isPersonal);
+        const totalSpent = sharedExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const splitCount = participants.length || 1;
+        const fairShare = totalSpent / splitCount;
+
+        sharedExpenses.forEach(exp => {
+            const payer = exp.paidBy || trip?.creatorEmail || "";
+            if (balances[payer] !== undefined) {
+                balances[payer] += exp.amount;
+            }
+        });
+
+        participants.forEach(p => {
+            balances[p] -= fairShare;
+        });
+
+        const debtors = participants.filter(p => balances[p] < -0.01).map(p => ({ email: p, amount: -balances[p] })).sort((a,b) => b.amount - a.amount);
+        const creditors = participants.filter(p => balances[p] > 0.01).map(p => ({ email: p, amount: balances[p] })).sort((a,b) => b.amount - a.amount);
+
+        const debts: {from: string, to: string, amount: number}[] = [];
+        let d = 0, c = 0;
+        const debtorsWork = debtors.map(x => ({...x}));
+        const creditorsWork = creditors.map(x => ({...x}));
+        
+        while(d < debtorsWork.length && c < creditorsWork.length) {
+            const debtor = debtorsWork[d];
+            const creditor = creditorsWork[c];
+            const amount = Math.min(debtor.amount, creditor.amount);
+            
+            if (amount > 0.01) {
+                debts.push({ from: debtor.email, to: creditor.email, amount });
+            }
+            
+            debtor.amount -= amount;
+            creditor.amount -= amount;
+            
+            if (debtor.amount < 0.01) d++;
+            if (creditor.amount < 0.01) c++;
+        }
+        
+        return { balances, debts, fairShare };
+    }, [expenses, participants, trip]);
+
     if (authLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#f8f9fc] dark:bg-slate-950">
@@ -395,6 +443,12 @@ export default function ExpensesPage() {
                     >
                         <BarChart3 size={18} /> Análisis
                     </button>
+                    <button
+                        onClick={() => setActiveTab("balances")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "balances" ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
+                    >
+                        <Users size={18} /> Saldos
+                    </button>
                 </div>
 
                 {activeTab === "analytics" ? (
@@ -535,6 +589,47 @@ export default function ExpensesPage() {
                             </div>
                         </div>
                     )
+                ) : activeTab === "balances" ? (
+                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 mb-6">
+                            <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
+                                <Users size={20} className="text-blue-500" /> Resumen de Saldos
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Cada participante debería pagar: <span className="font-bold text-slate-900 dark:text-slate-100">{formatMoney(settlementData.fairShare)}</span></p>
+                            
+                            {settlementData.debts.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 dark:bg-green-900/20 text-green-500 mb-4">
+                                        <Users size={28} />
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 dark:text-slate-100">¡Cuentas saldadas!</h4>
+                                    <p className="text-sm text-slate-500 mt-1">No hay deudas pendientes entre los participantes.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-sm text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Quién debe a quién</h4>
+                                    {settlementData.debts.map((debt, i) => (
+                                        <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                            <div className="flex items-center flex-1 min-w-0">
+                                                <span className="text-sm font-bold text-rose-600 dark:text-rose-400 truncate max-w-[100px]">
+                                                    {debt.from === user?.email ? "Tú" : (participantNames[debt.from] || debt.from.split('@')[0])}
+                                                </span>
+                                                <ArrowRight size={14} className="mx-2 flex-shrink-0 text-slate-400" />
+                                                <span className="text-sm font-bold text-green-600 dark:text-green-400 truncate max-w-[100px]">
+                                                    {debt.to === user?.email ? "Tú" : (participantNames[debt.to] || debt.to.split('@')[0])}
+                                                </span>
+                                            </div>
+                                            <div className="text-right pl-4">
+                                                <span className="text-base font-black text-slate-900 dark:text-white">
+                                                    {formatMoney(debt.amount)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </section>
                 ) : (
                     <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center mb-6">
@@ -575,7 +670,14 @@ export default function ExpensesPage() {
                                                 <IconComponent size={24} />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">{expense.title}</h4>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">{expense.title}</h4>
+                                                    {expense.isPersonal && (
+                                                        <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                            Personal
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mt-0.5">{format(expense.date, "MMM dd")} • {expense.category}</p>
                                                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                                                     Pagado por: {expense.paidBy === user?.email ? "Tú" : (participantNames[expense.paidBy || trip.creatorEmail || ""] || expense.paidBy || "Creador")}

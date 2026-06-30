@@ -1,4 +1,6 @@
 "use client";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+
 
 import React, { useState } from "react";
 import { X, ChevronRight } from "lucide-react";

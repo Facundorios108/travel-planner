@@ -59,6 +59,7 @@ export interface Expense {
     date: Date;
     createdAt?: Date;
     paidBy?: string; // Email of the user who paid
+    isPersonal?: boolean;
 }
 
 export type DocumentType = 'ticket' | 'hotel' | 'id' | 'train' | 'car' | 'other';

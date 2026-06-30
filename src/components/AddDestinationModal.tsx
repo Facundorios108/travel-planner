@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import LocationSearch from "./LocationSearch";
 import { Destination } from "@/types/travel";
@@ -13,6 +14,7 @@ interface AddDestinationModalProps {
 }
 
 export function AddDestinationModal({ isOpen, onClose, onSave, tripId, editingDestination }: AddDestinationModalProps) {
+    useLockBodyScroll(isOpen);
     const [city, setCity] = useState("");
     const [country, setCountry] = useState("");
     const [startDate, setStartDate] = useState("");

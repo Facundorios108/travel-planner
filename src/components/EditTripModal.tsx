@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { X, Calendar } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Trip } from "@/types/travel";
@@ -11,6 +12,7 @@ interface EditTripModalProps {
 }
 
 export function EditTripModal({ isOpen, onClose, onSave, trip }: EditTripModalProps) {
+    useLockBodyScroll(isOpen);
     const [name, setName] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");

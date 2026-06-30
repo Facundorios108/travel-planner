@@ -1,4 +1,6 @@
 "use client";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+
 
 import { AlertTriangle, X } from "lucide-react";
 
@@ -23,6 +25,7 @@ export function ConfirmDialog({
     cancelText = "Cancelar",
     variant = "danger"
 }: ConfirmDialogProps) {
+    useLockBodyScroll(isOpen);
     if (!isOpen) return null;
 
     const handleConfirm = () => {

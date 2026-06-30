@@ -31,7 +31,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <head>
         {/* Apple PWA tags — inline to avoid Next.js 16 MetadataWrapper hydration bug */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="CatchMe" />
         <link rel="apple-touch-icon" href="/apple-icon-catchme.png" />

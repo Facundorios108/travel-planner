@@ -1180,8 +1180,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                     <div className="flex items-center gap-2.5">
                                         <span className="text-xl">🇦🇷</span>
                                         <div>
-                                            <h4 className="text-xs font-black text-slate-800 dark:text-indigo-200 uppercase tracking-wider">Mercado cambiario Argentina</h4>
-                                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-0.5">Cotizaciones reales del dólar</p>
+                                            <h4 className="text-xs font-black text-slate-800 dark:text-indigo-200 uppercase tracking-wider">Dólar Argentina</h4>
                                         </div>
                                     </div>
                                     <span className="text-[8px] bg-emerald-500/10 dark:bg-emerald-400/15 text-emerald-600 dark:text-emerald-300 font-black px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
@@ -1192,38 +1191,29 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                 <div className="grid grid-cols-3 gap-2">
                                     {argentineRates.map(rate => {
                                         let title = rate.nombre;
-                                        let desc = "";
                                         let bg = "bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/40";
                                         let textCol = "text-slate-800 dark:text-white";
                                         let labelCol = "text-slate-400 dark:text-slate-500";
                                         
                                         if (rate.casa === "blue") {
-                                            title = "Dólar Blue";
-                                            desc = "Informal / Libre";
+                                            title = "Blue";
                                             bg = "bg-indigo-500 text-white dark:bg-indigo-600 shadow-md shadow-indigo-500/15";
                                             textCol = "text-white";
                                             labelCol = "text-indigo-100";
                                         } else if (rate.casa === "tarjeta") {
-                                            title = "Dólar Tarjeta";
-                                            desc = "Compras exterior";
+                                            title = "Tarjeta";
                                             bg = "bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40";
                                             textCol = "text-indigo-600 dark:text-indigo-300";
                                         } else {
-                                            title = "Dólar BNA";
-                                            desc = "Banco Nación";
+                                            title = "Oficial";
                                         }
 
                                         return (
-                                            <div key={rate.casa} className={`p-3 rounded-2xl ${bg} flex flex-col justify-between h-20 shadow-sm transition-all hover:scale-[1.02]`}>
-                                                <div>
-                                                    <p className={`text-[9px] font-black uppercase leading-none ${labelCol}`}>
-                                                        {title}
-                                                    </p>
-                                                    <p className={`text-[8px] font-medium leading-tight mt-1 opacity-80 ${rate.casa === 'blue' ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'}`}>
-                                                        {desc}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
+                                            <div key={rate.casa} className={`p-3 rounded-2xl ${bg} flex flex-col justify-center gap-2 h-20 shadow-sm transition-all hover:scale-[1.02]`}>
+                                                <p className={`text-[9px] font-black uppercase leading-none ${labelCol}`}>
+                                                    {title}
+                                                </p>
+                                                <div className="text-left">
                                                     <p className={`text-sm font-black leading-none ${textCol}`}>
                                                         ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(rate.venta)}
                                                     </p>
@@ -1232,24 +1222,6 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                         );
                                     })}
                                 </div>
-                                
-                                {/* Quick interactive calculator based on Blue & Tarjeta */}
-                                {currencyAmountNum > 0 && baseCurrency === "USD" && (
-                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2 text-[10px] text-slate-600 dark:text-slate-400 font-bold">
-                                        <div className="flex justify-between items-center">
-                                            <span>Mismo importe en Efectivo (Blue):</span>
-                                            <span className="text-indigo-600 dark:text-indigo-400 font-black text-xs">
-                                                ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(currencyAmountNum * (argentineRates.find(r => r.casa === "blue")?.venta || 0))} ARS
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span>Mismo importe con Tarjeta (Turista):</span>
-                                            <span className="text-indigo-600 dark:text-indigo-400 font-black text-xs">
-                                                ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(currencyAmountNum * (argentineRates.find(r => r.casa === "tarjeta")?.venta || 0))} ARS
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
 
@@ -1265,7 +1237,7 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {CURRENCIES.filter(c => c.code !== baseCurrency).map((conv) => {
+                                    {CURRENCIES.filter(c => c.code !== baseCurrency && c.code !== "ARS").map((conv) => {
                                         const rate = currencyRates?.rates?.[conv.code] || 0;
                                         const value = currencyAmountNum * rate;
                                         const formattedVal = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value);

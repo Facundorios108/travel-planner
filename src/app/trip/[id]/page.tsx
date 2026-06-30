@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useTransition } from "react";
-import { ChevronLeft, CalendarDays, Clock, Plus, Loader2, PlaneLanding, Hotel, Car, MapPin, Activity as ActivityIcon, MoreHorizontal, Trash2 as TrashIcon, Trash2, Edit2, PlusCircle, AlertTriangle, Users } from "lucide-react";
+import { ChevronLeft, CalendarDays, Clock, Plus, Loader2, PlaneLanding, Hotel, Car, MapPin, Activity as ActivityIcon, MoreHorizontal, Trash2 as TrashIcon, Trash2, Edit2, PlusCircle, AlertTriangle, Users, Map } from "lucide-react";
 import { travelService } from "@/lib/services";
 import { Trip, Destination, Activity, ActivityType } from "@/types/travel";
 import { format } from "date-fns";
@@ -404,13 +404,13 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                             onClick={() => setView("timeline")}
                             className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${view === "timeline" ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
                         >
-                            Timeline
+                            General
                         </button>
                         <button
                             onClick={() => setView("calendar")}
                             className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${view === "calendar" ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
                         >
-                            Calendar
+                            Día a Día
                         </button>
                     </div>
                 </div>
@@ -588,13 +588,38 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
 
                                     {/* Activities for Selected Date */}
                                     <div className="mt-8 space-y-4 w-full">
-                                        <div className="flex items-center justify-between mb-2 px-1">
-                                            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
-                                                {selectedCalendarDate ? format(new Date(selectedCalendarDate + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: es }) : ''}
-                                            </h3>
-                                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-bold px-3 py-1 rounded-full">
-                                                {activities.filter(a => format(a.startDate, "yyyy-MM-dd") === selectedCalendarDate).length} actividades
-                                            </span>
+                                        <div className="flex items-center justify-between mb-4 px-1">
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 capitalize">
+                                                    {selectedCalendarDate ? format(new Date(selectedCalendarDate + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: es }) : ''}
+                                                </h3>
+                                                <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-bold px-3 py-1 rounded-full hidden sm:inline-block">
+                                                    {activities.filter(a => format(a.startDate, "yyyy-MM-dd") === selectedCalendarDate).length} act.
+                                                </span>
+                                            </div>
+                                            {(() => {
+                                                const dayActs = activities
+                                                    .filter(a => format(a.startDate, "yyyy-MM-dd") === selectedCalendarDate)
+                                                    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+                                                
+                                                if (dayActs.length < 2) return null;
+                                                
+                                                const origin = encodeURIComponent(dayActs[0].location || dayActs[0].title);
+                                                const destination = encodeURIComponent(dayActs[dayActs.length - 1].location || dayActs[dayActs.length - 1].title);
+                                                const waypoints = dayActs.slice(1, -1).map(a => encodeURIComponent(a.location || a.title)).join('|');
+                                                const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
+                                                
+                                                return (
+                                                    <a 
+                                                        href={mapsUrl} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 text-xs font-bold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/20 transition shadow-sm"
+                                                    >
+                                                        <Map size={14} /> Ver Ruta
+                                                    </a>
+                                                );
+                                            })()}
                                         </div>
 
                                         {activities

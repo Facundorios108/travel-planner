@@ -123,7 +123,7 @@ export default function Dashboard() {
         <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-[430px]">
             {/* Modern Header */}
             {activeTab !== "profile" && (
-                <header className="sticky top-0 z-10 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm transition-all duration-200">
+                <header className="sticky top-0 z-50 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm transition-all duration-200">
                     <div className="flex items-center gap-2.5">
                         <Logo size={36} />
                         {activeTab === "home" && (

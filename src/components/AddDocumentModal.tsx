@@ -1,4 +1,6 @@
 "use client";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+
 
 import React, { useState } from "react";
 import { useToast } from "./Toast";
@@ -13,6 +15,7 @@ interface AddDocumentModalProps {
 }
 
 export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalProps) {
+    useLockBodyScroll(isOpen);
     const { showToast, ToastComponent } = useToast();
     const [title, setTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");

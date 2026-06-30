@@ -19,27 +19,12 @@ export default function WorldMap({
   countriesLookup,
   onSelectCountry,
 }: WorldMapProps) {
-  const [position, setPosition] = useState<{ center: [number, number]; zoom: number }>({ center: [0, 10], zoom: 1.2 });
   const [hoveredCountry, setHoveredCountry] = useState<{ flag: string; spanishName: string } | null>(null);
 
-  const handleZoomIn = () => {
-    if (position.zoom >= 8) return;
-    setPosition((prev) => ({ ...prev, zoom: prev.zoom * 1.5 }));
-  };
-
-  const handleZoomOut = () => {
-    if (position.zoom <= 1) return;
-    setPosition((prev) => ({ ...prev, zoom: prev.zoom / 1.5 }));
-  };
-
-  const handleReset = () => {
-    setPosition({ center: [0, 10], zoom: 1.2 });
-  };
+  const [position, setPosition] = useState({ center: [0, 0] as [number, number], zoom: 1 });
 
   const handleMoveEnd = (newPosition: { center: [number, number]; zoom: number }) => {
-    // Restrict extreme zooms
-    const zoom = Math.min(Math.max(newPosition.zoom, 1), 8);
-    setPosition({ center: newPosition.center, zoom });
+    setPosition(newPosition);
   };
 
   const getCountryColor = (geoId: string) => {
@@ -136,31 +121,6 @@ export default function WorldMap({
           </Geographies>
         </ZoomableGroup>
       </ComposableMap>
-
-      {/* Control Buttons */}
-      <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
-        <button
-          onClick={handleZoomIn}
-          className="w-10 h-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-md border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:scale-105 active:scale-95 transition-all"
-          title="Acercar"
-        >
-          <ZoomIn size={18} strokeWidth={2.5} />
-        </button>
-        <button
-          onClick={handleZoomOut}
-          className="w-10 h-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-md border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:scale-105 active:scale-95 transition-all"
-          title="Alejar"
-        >
-          <ZoomOut size={18} strokeWidth={2.5} />
-        </button>
-        <button
-          onClick={handleReset}
-          className="w-10 h-10 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-md border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:scale-105 active:scale-95 transition-all"
-          title="Restaurar vista"
-        >
-          <RotateCcw size={16} strokeWidth={2.5} />
-        </button>
-      </div>
 
       {/* Floating Instructions */}
       <div className="absolute top-4 left-4 bg-slate-900/60 dark:bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[9px] font-bold text-white uppercase tracking-wider shadow pointer-events-none">

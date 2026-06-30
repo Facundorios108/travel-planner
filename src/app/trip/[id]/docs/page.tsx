@@ -225,7 +225,15 @@ export default function DocumentsPage() {
                 </div>
 
                 {/* Filter Chips */}
-                <div className="flex gap-3 px-6 py-4 overflow-x-auto no-scrollbar">
+                <div 
+                    className="flex gap-3 px-6 py-4 overflow-x-auto snap-x no-scrollbar-chips"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    <style>{`
+                        .no-scrollbar-chips::-webkit-scrollbar {
+                            display: none;
+                        }
+                    `}</style>
                     {filters.map(filter => (
                         <button
                             key={filter}

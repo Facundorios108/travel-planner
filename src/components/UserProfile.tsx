@@ -338,25 +338,27 @@ Saludos!`;
                     onClick={() => setActiveStatDetail("trips")}
                     className="flex flex-col items-center justify-center bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl p-5 border border-blue-500/10 transition-all hover:bg-blue-500/10 dark:hover:bg-blue-500/20 active:scale-95 cursor-pointer shadow-sm"
                 >
-                    <p className="text-blue-500 dark:text-blue-400 text-2xl font-black">{tripsCount}</p>
+                    <div className="text-blue-500 dark:text-blue-400 text-2xl font-black h-8 flex items-center justify-center">
+                        {tripsCount}
+                    </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-1 text-center leading-tight">Viajes<br />Planeados</p>
                 </div>
                 <div 
                     onClick={() => setActiveStatDetail("countries")}
                     className="flex flex-col items-center justify-center bg-emerald-500/5 dark:bg-emerald-500/10 rounded-2xl p-5 border border-emerald-500/10 transition-all hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 active:scale-95 cursor-pointer shadow-sm"
                 >
-                    <p className="text-emerald-500 dark:text-emerald-400 text-2xl font-black">
-                        {!loadingStats ? passportCountries.length : countriesVisited}
-                    </p>
+                    <div className="text-emerald-500 dark:text-emerald-400 text-2xl font-black h-8 flex items-center justify-center">
+                        {loadingStats ? <Loader2 size={20} className="animate-spin opacity-50" /> : passportCountries.length}
+                    </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-1 text-center leading-tight">Países<br />Visitados</p>
                 </div>
                 <div 
                     onClick={() => setActiveStatDetail("docs")}
                     className="flex flex-col items-center justify-center bg-indigo-500/5 dark:bg-indigo-500/10 rounded-2xl p-5 border border-indigo-500/10 transition-all hover:bg-indigo-500/10 dark:hover:bg-indigo-500/20 active:scale-95 cursor-pointer shadow-sm"
                 >
-                    <p className="text-indigo-500 dark:text-indigo-400 text-2xl font-black">
-                        {!loadingStats ? savedDocuments.length : docsSaved}
-                    </p>
+                    <div className="text-indigo-500 dark:text-indigo-400 text-2xl font-black h-8 flex items-center justify-center">
+                        {loadingStats ? <Loader2 size={20} className="animate-spin opacity-50" /> : savedDocuments.length}
+                    </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-1 text-center leading-tight">Docs<br />Guardados</p>
                 </div>
             </div>

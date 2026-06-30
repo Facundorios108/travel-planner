@@ -1,4 +1,6 @@
 "use client";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+
 
 import React, { useState } from "react";
 import { useToast } from "./Toast";
@@ -33,6 +35,7 @@ export default function AddExpenseModal({
     const [category, setCategory] = useState<ExpenseCategory>(expense?.category || "other");
     const [date, setDate] = useState<Date>(expense?.date || new Date());
     const [paidBy, setPaidBy] = useState(expense?.paidBy || defaultPaidBy || user?.email || "");
+    const [isPersonal, setIsPersonal] = useState(expense?.isPersonal || false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -63,7 +66,8 @@ export default function AddExpenseModal({
                 currency,
                 category,
                 date,
-                paidBy: paidBy || user?.email || ""
+                paidBy: paidBy || user?.email || "",
+                isPersonal
             });
             setIsSuccess(true);
             hapticFeedback.success();
@@ -236,6 +240,32 @@ export default function AddExpenseModal({
                                             <option value={user?.email || ""}>{user?.email || "Cargando..."}</option>
                                         )}
                                     </select>
+                                </div>
+
+                                {/* Tipo de Gasto (Compartido vs Personal) */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
+                                        Tipo de Gasto
+                                    </label>
+                                    <div className="flex bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1 shadow-inner">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPersonal(false)}
+                                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${!isPersonal ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            Compartido
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPersonal(true)}
+                                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${isPersonal ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            Solo para mí
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mt-2 px-1">
+                                        {isPersonal ? "Este gasto no se dividirá con nadie y no generará deudas." : "Este gasto se dividirá equitativamente entre los viajeros."}
+                                    </p>
                                 </div>
 
                                 {/* Categoría */}
