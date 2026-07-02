@@ -20,9 +20,11 @@ interface LocationSearchProps {
     placeholder: string;
     value: string;
     onSelect: (locationInfo: { country: string; city: string }) => void;
+    required?: boolean;
+    className?: string;
 }
 
-export default function LocationSearch({ placeholder, value, onSelect }: LocationSearchProps) {
+export default function LocationSearch({ placeholder, value, onSelect, required = true, className }: LocationSearchProps) {
     const [query, setQuery] = useState(value);
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
@@ -91,7 +93,7 @@ export default function LocationSearch({ placeholder, value, onSelect }: Locatio
         <div ref={wrapperRef} className="relative w-full">
             <input
                 type="text"
-                required
+                required={required}
                 value={query}
                 onChange={(e) => {
                     setQuery(e.target.value);
@@ -101,7 +103,7 @@ export default function LocationSearch({ placeholder, value, onSelect }: Locatio
                     if (results.length > 0) setIsOpen(true);
                 }}
                 placeholder={placeholder}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium rounded-xl outline-none border border-transparent focus:border-slate-200 dark:focus:border-slate-700 transition-colors"
+                className={className || "w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium rounded-xl outline-none border border-transparent focus:border-slate-200 dark:focus:border-slate-700 transition-colors"}
             />
             {loading && (
                 <div className="absolute right-3 top-3.5 text-slate-400">

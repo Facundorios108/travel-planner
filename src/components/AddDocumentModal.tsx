@@ -59,10 +59,10 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
     ];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity">
             {ToastComponent}
             <div
-                className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:fade-in duration-300"
+                className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -77,7 +77,7 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
                 </div>
 
                 {/* Form Body */}
-                <div className="px-8 pb-8 space-y-7">
+                <div className="px-8 pb-8 space-y-7 overflow-y-auto scrollbar-hide flex-1">
                     {/* Title */}
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
@@ -207,7 +207,7 @@ export function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalPr
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 pb-8 flex gap-4">
+                <div className="px-8 pb-8 flex justify-end gap-4 shrink-0">
                     <button
                         onClick={onClose}
                         className="flex-1 font-bold px-6 py-4 rounded-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95"

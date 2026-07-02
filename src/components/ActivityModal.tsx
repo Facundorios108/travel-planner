@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { X, PlaneLanding, Car, Activity as ActivityIcon, Calendar, MapPin, MoreHorizontal } from "lucide-react";
+import LocationSearch from "./LocationSearch";
 import { Activity, ActivityType, Destination } from "@/types/travel";
 import { format } from "date-fns";
 
@@ -108,7 +109,7 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                     </button>
                 </div>
 
-                <div className="overflow-y-auto px-8 pb-2 flex-1">
+                <div className="overflow-y-auto px-8 pb-2 flex-1 scrollbar-hide">
                     {error && (
                         <div className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 p-4 rounded-2xl border-2 border-red-200 dark:border-red-900/30 font-medium">
                             {error}
@@ -153,13 +154,15 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                         {/* Location */}
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Ubicación / Dirección exacta <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
-                            <input
-                                type="text"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                placeholder="Ej: 7-Eleven Honolulu, Torre Eiffel..."
-                                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
-                            />
+                            <div className="location-search-wrapper">
+                                <LocationSearch
+                                    placeholder="Ej: 7-Eleven Honolulu, Torre Eiffel..."
+                                    value={location}
+                                    required={false}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    onSelect={(loc) => setLocation(loc.city + (loc.country ? `, ${loc.country}` : ""))}
+                                />
+                            </div>
                         </div>
 
                         {/* Destination */}
@@ -179,25 +182,25 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                         </div>
 
                         {/* Dates */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Fecha/Hora Inicio</label>
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Fecha/Hora Inicio</label>
                                 <input
                                     type="datetime-local"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Fecha/Hora Fin <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Fecha/Hora Fin <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
                                 <input
                                     type="datetime-local"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
                                     min={startDate}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                         </div>

@@ -696,10 +696,12 @@ export default function ExpensesPage() {
                 )}
             </main>
 
-            <div className="fixed bottom-24 right-6 z-30">
-                <button onClick={() => setIsAddExpenseModalOpen(true)} className="w-16 h-16 bg-[#1877F2] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(24,119,242,0.4)] group">
-                    <Plus size={32} strokeWidth={3} className="transition-transform duration-300 group-hover:rotate-90" />
-                </button>
+            <div className="fixed bottom-44 w-full max-w-2xl pointer-events-none z-30 left-1/2 -translate-x-1/2">
+                <div className="absolute right-6">
+                    <button onClick={() => setIsAddExpenseModalOpen(true)} className="w-16 h-16 bg-[#1877F2] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(24,119,242,0.4)] pointer-events-auto group">
+                        <Plus size={32} strokeWidth={3} className="transition-transform duration-300 group-hover:rotate-90" />
+                    </button>
+                </div>
             </div>
 
             <TripBottomNav tripId={tripId} />

@@ -437,15 +437,26 @@ export default function TravelTools({ trips }: TravelToolsProps) {
 
         setWeatherLoading(true);
         try {
-            // 1. Geocode city
+            let latitude, longitude, timezone;
             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=es`);
             const geoData = await geoRes.json();
             if (!geoData.results || geoData.results.length === 0) {
-                showToast(`No se encontró la ciudad "${cityName}"`, "error");
-                setWeatherLoading(false);
-                return;
+                // Fallback to Nominatim
+                const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`);
+                const nomData = await nomRes.json();
+                if (!nomData || nomData.length === 0) {
+                    showToast(`No se encontró la ciudad "${cityName}"`, "error");
+                    setWeatherLoading(false);
+                    return;
+                }
+                latitude = nomData[0].lat;
+                longitude = nomData[0].lon;
+                timezone = "auto";
+            } else {
+                latitude = geoData.results[0].latitude;
+                longitude = geoData.results[0].longitude;
+                timezone = geoData.results[0].timezone;
             }
-            const { latitude, longitude, timezone } = geoData.results[0];
 
             // 2. Fetch weather
             const wxRes = await fetch(

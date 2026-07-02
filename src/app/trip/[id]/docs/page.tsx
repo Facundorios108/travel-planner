@@ -316,13 +316,15 @@ export default function DocumentsPage() {
 
             {/* Floating Action Button */}
             {documents.length > 0 && (
-                <div className="fixed bottom-32 right-6 z-20">
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="w-16 h-16 bg-[#1877F2] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(24,119,242,0.4)] hover:shadow-[0_12px_20px_rgba(24,119,242,0.5)] border border-blue-400 group"
-                >
-                    <Plus size={32} strokeWidth={2.5} className="transition-transform duration-300 group-hover:rotate-90" />
-                </button>
+                <div className="fixed bottom-44 w-full max-w-2xl pointer-events-none z-20 left-1/2 -translate-x-1/2">
+                    <div className="absolute right-6">
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="w-16 h-16 bg-[#1877F2] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(24,119,242,0.4)] hover:shadow-[0_12px_20px_rgba(24,119,242,0.5)] border border-blue-400 pointer-events-auto group"
+                        >
+                            <Plus size={32} strokeWidth={2.5} className="transition-transform duration-300 group-hover:rotate-90" />
+                        </button>
+                    </div>
                 </div>
             )}
 

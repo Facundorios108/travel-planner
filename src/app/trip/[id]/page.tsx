@@ -678,11 +678,15 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             </main>
 
             {/* FAB global para ambas vistas */}
-            <button
-                onClick={openNewModal}
-                className="fixed bottom-32 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 z-40 group">
-                <Plus size={28} className="transition-transform group-hover:rotate-90" />
-            </button>
+            <div className="fixed bottom-44 w-full max-w-lg pointer-events-none z-40 left-1/2 -translate-x-1/2">
+                <div className="absolute right-6">
+                    <button
+                        onClick={openNewModal}
+                        className="w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 pointer-events-auto group">
+                        <Plus size={28} className="transition-transform group-hover:rotate-90" />
+                    </button>
+                </div>
+            </div>
 
             {/* Activity Modal */}
             <ActivityModal

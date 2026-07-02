@@ -368,7 +368,7 @@ Saludos!`;
                 {/* Mi Pasaporte Digital */}
                 <button 
                     onClick={() => {
-                        setPassportState(passportData.passportNo ? "details" : "cover");
+                        setPassportState("cover");
                         setIsPassportOpen(true);
                     }}
                     className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 p-4 rounded-[1.5rem] transition-colors group border border-slate-100 dark:border-slate-800"

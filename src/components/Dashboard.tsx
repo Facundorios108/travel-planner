@@ -28,7 +28,13 @@ export default function Dashboard() {
         setIndexErrorLink(null);
         try {
             const userTrips = await travelService.getUserTrips(user.uid, user.email);
-            setTrips(userTrips);
+            // Sort trips: closest to farthest (ascending by date)
+            const sortedTrips = [...userTrips].sort((a, b) => {
+                const dateA = a.startDate ? new Date(a.startDate).getTime() : new Date(a.createdAt).getTime();
+                const dateB = b.startDate ? new Date(b.startDate).getTime() : new Date(b.createdAt).getTime();
+                return dateA - dateB;
+            });
+            setTrips(sortedTrips);
         } catch (error: any) {
             console.error("Error fetching trips:", error);
             if (error.message && error.message.includes("requires an index")) {
@@ -161,12 +167,16 @@ export default function Dashboard() {
 
                         {/* Floating Action Button for Nuevo Viaje */}
                         {activeTab === "home" && (
-                            <button
-                                onClick={() => setIsAddingTrip(true)}
-                                className="fixed bottom-28 right-4 sm:right-auto sm:ml-[350px] w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 z-40 group"
-                            >
-                                <Plus size={28} className="transition-transform group-hover:rotate-90" />
-                            </button>
+                            <div className="fixed bottom-44 w-full max-w-[430px] pointer-events-none z-40 left-1/2 -translate-x-1/2">
+                                <div className="absolute right-4">
+                                    <button
+                                        onClick={() => setIsAddingTrip(true)}
+                                        className="w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 pointer-events-auto group"
+                                    >
+                                        <Plus size={28} className="transition-transform group-hover:rotate-90" />
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}

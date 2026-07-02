@@ -20,8 +20,8 @@ export default function TripBottomNav({ tripId }: TripBottomNavProps) {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe pb-3 pointer-events-none">
-            <nav className="mx-auto max-w-md pointer-events-auto glass rounded-[2rem] p-2 flex justify-around items-center">
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+16px)] left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-[400px] z-50 pointer-events-none">
+            <nav className="mx-auto w-full pointer-events-auto glass rounded-[2rem] p-2 flex justify-around items-center shadow-2xl">
                 {tabs.map((tab) => {
                     const isActive = pathname === tab.href || (tab.id === 'timeline' && pathname === `/trip/${tripId}`);
                     const Icon = tab.icon;

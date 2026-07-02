@@ -65,7 +65,7 @@ export function EditTripModal({ isOpen, onClose, onSave, trip }: EditTripModalPr
                     </button>
                 </div>
 
-                <div className="px-8 pb-2 overflow-y-auto flex-1">
+                <div className="px-8 pb-2 overflow-y-auto flex-1 scrollbar-hide">
                     {error && (
                         <div className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 p-4 rounded-2xl border-2 border-red-200 dark:border-red-900/30 font-medium">
                             {error}

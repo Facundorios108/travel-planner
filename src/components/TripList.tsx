@@ -4,7 +4,7 @@ import { Trip } from "@/types/travel";
 import { format, differenceInMonths, differenceInWeeks, differenceInDays, differenceInHours, differenceInMinutes, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { Clock, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState, memo, useCallback, useTransition } from "react";
 
 // Helper component for start date display
@@ -48,20 +48,11 @@ const StartDateDisplay = memo(function StartDateDisplay({ startDate }: { startDa
     );
 });
 
-// Memoized trip card component
-const TripCard = memo(function TripCard({ trip, onClick }: { trip: Trip; onClick: () => void }) {
-    const [isPending, startTransition] = useTransition();
-    
-    const handleClick = () => {
-        startTransition(() => {
-            onClick();
-        });
-    };
-    
+const TripCard = memo(function TripCard({ trip, href }: { trip: Trip; href: string }) {
     return (
-        <div
-            onClick={handleClick}
-            className="group relative bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-200/40 dark:border-slate-800/40 shadow-lg shadow-slate-200/30 dark:shadow-black/30 transition-all duration-200 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 hover:border-blue-200/60 dark:hover:border-blue-800/60 cursor-pointer active:scale-[0.98]"
+        <Link
+            href={href}
+            className="group relative bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-200/40 dark:border-slate-800/40 shadow-lg shadow-slate-200/30 dark:shadow-black/30 transition-all duration-200 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 hover:border-blue-200/60 dark:hover:border-blue-800/60 cursor-pointer active:scale-[0.98] block"
         >
             {/* Upper Half: Image with Date Badge */}
             <div className="h-56 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden relative">
@@ -99,16 +90,11 @@ const TripCard = memo(function TripCard({ trip, onClick }: { trip: Trip; onClick
                     </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 });
 
 export default function TripList({ trips }: { trips: Trip[] }) {
-    const router = useRouter();
-
-    const handleTripClick = useCallback((tripId: string) => {
-        router.push(`/trip/${tripId}`);
-    }, [router]);
 
     return (
         <div className="w-full space-y-6 mt-4">
@@ -117,15 +103,11 @@ export default function TripList({ trips }: { trips: Trip[] }) {
             </div>
 
             <div className="space-y-6">
-                {[...trips].sort((a, b) => {
-                    const dateA = a.startDate ? new Date(a.startDate).getTime() : new Date(a.createdAt).getTime();
-                    const dateB = b.startDate ? new Date(b.startDate).getTime() : new Date(b.createdAt).getTime();
-                    return dateA - dateB;
-                }).map((trip) => (
+                {trips.map((trip) => (
                     <TripCard 
                         key={trip.id} 
                         trip={trip} 
-                        onClick={() => handleTripClick(trip.id)} 
+                        href={`/trip/${trip.id}`} 
                     />
                 ))}
             </div>

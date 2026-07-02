@@ -174,7 +174,7 @@ export default function AddExpenseModal({
                         {/* Body & Form */}
                         <form onSubmit={handleSubmit}>
                             {/* Scrollable inputs wrapper */}
-                            <div className="px-8 pb-4 max-h-[calc(85vh-200px)] overflow-y-auto space-y-5 pr-4 scrollbar-thin">
+                            <div className="px-8 pb-4 max-h-[calc(85vh-200px)] overflow-y-auto space-y-5 pr-4 scrollbar-hide">
                                 {/* Title */}
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
