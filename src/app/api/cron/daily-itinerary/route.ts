@@ -86,26 +86,11 @@ export async function GET(request: Request) {
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
             });
 
-            // Leer el logo para adjuntarlo en línea (inline attachment)
-            let emailAttachments = [];
-            let hasLogo = false;
-            try {
-                const logoPath = path.join(process.cwd(), 'public', 'email-logo.png');
-                if (fs.existsSync(logoPath)) {
-                    const logoBuffer = fs.readFileSync(logoPath);
-                    emailAttachments.push({
-                        filename: 'email-logo.png',
-                        content: logoBuffer,
-                        content_id: 'catchme-logo' // Usado como cid:catchme-logo en el HTML
-                    });
-                    hasLogo = true;
-                }
-            } catch (e) {
-                console.error("No se pudo cargar el logo:", e);
-            }
+            // Use the request URL to determine the origin if NEXT_PUBLIC_APP_URL is not set
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
             // Generate HTML Content
-            const htmlContent = generateEmailHtml(trip.name, dateString, activities, tripId, hasLogo);
+            const htmlContent = generateEmailHtml(trip.name, dateString, activities, tripId, appUrl);
 
             // Send Email
             // Make subject unique to avoid Gmail grouping and hiding content behind 3 dots during testing
@@ -118,7 +103,6 @@ export async function GET(request: Request) {
                 to: Array.from(recipients),
                 subject: uniqueSubject,
                 html: htmlContent,
-                attachments: emailAttachments,
             });
 
             if (error) {
@@ -148,13 +132,10 @@ function formatTime(dateObj: any) {
 }
 
 // Helper to generate the email HTML
-function generateEmailHtml(tripName: string, dateString: string, activities: any[], tripId: string, hasLogo: boolean = false) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+function generateEmailHtml(tripName: string, dateString: string, activities: any[], tripId: string, appUrl: string) {
     const tripUrl = `${appUrl}/trip/${tripId}`;
 
-    const headerLogo = hasLogo 
-        ? `<img src="cid:catchme-logo" alt="CatchMe Logo" style="width: 64px; height: 64px; margin-bottom: 16px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background-color: #ffffff;" />`
-        : `<div style="background-color: #ffffff; width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); font-size: 32px;">🌍</div>`;
+    const headerLogo = `<img src="${appUrl}/LogoApp.png" alt="CatchMe Logo" style="width: 64px; height: 64px; margin-bottom: 16px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background-color: #ffffff; object-fit: cover;" />`;
 
     const activitiesHtml = activities.map(act => `
         <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
