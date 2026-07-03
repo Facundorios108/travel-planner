@@ -102,7 +102,7 @@ export default function TripList({ trips }: { trips: Trip[] }) {
                 <h2 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">Próximos Viajes</h2>
             </div>
 
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {trips.map((trip) => (
                     <TripCard 
                         key={trip.id} 

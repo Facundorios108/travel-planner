@@ -188,7 +188,16 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                                 <input
                                     type="datetime-local"
                                     value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
+                                    onChange={(e) => {
+                                        const newStart = e.target.value;
+                                        setStartDate(newStart);
+                                        // Si endDate está vacío, auto-completar con la misma fecha
+                                        if (!endDate && newStart) {
+                                            setEndDate(newStart);
+                                        } else if (endDate && newStart > endDate) {
+                                            setEndDate(newStart); // Mover endDate hacia adelante si quedó atrás
+                                        }
+                                    }}
                                     className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     required
                                 />
@@ -218,7 +227,7 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                     </form>
                 </div>
 
-                <div className="px-8 pb-8 flex justify-end gap-4 shrink-0">
+                <div className="px-8 pb-8 pt-6 flex justify-end gap-4 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}

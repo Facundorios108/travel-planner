@@ -158,6 +158,27 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
         budgetAlerts: true
     });
 
+    React.useEffect(() => {
+        if (user) {
+            travelService.getUserPreferences(user.uid).then(fetchedPrefs => {
+                if (fetchedPrefs) {
+                    setPrefs(fetchedPrefs);
+                }
+            }).catch(console.error);
+        }
+    }, [user]);
+
+    const handleSavePrefs = async (newPrefs: typeof prefs) => {
+        setPrefs(newPrefs);
+        if (user) {
+            try {
+                await travelService.saveUserPreferences(user.uid, newPrefs);
+            } catch (error) {
+                console.error("Error saving preferences", error);
+            }
+        }
+    };
+
     const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -395,14 +416,6 @@ Saludos!`;
                     <span className="text-slate-400 group-hover:text-[#1877F2] transition-colors">➔</span>
                 </button>
 
-                {/* Apariencia Toggle */}
-                <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-center rounded-xl bg-[#1877F2]/10 dark:bg-[#1877F2]/20 text-[#1877F2] h-12 w-12">
-                        <Settings size={20} strokeWidth={2.5} />
-                    </div>
-                    <span className="flex-1 text-left text-slate-900 dark:text-slate-100 font-bold text-sm">Apariencia (Dark Mode)</span>
-                    <ThemeToggle />
-                </div>
 
                 {/* Métodos de Pago */}
                 <button 
@@ -480,24 +493,44 @@ Saludos!`;
                             <button onClick={() => setIsPrefsOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400"><X size={18} /></button>
                         </div>
                         <div className="space-y-4 py-2">
-                            {[
-                                { key: "vueloAlerts", label: "Alertas de Estado de Vuelo", desc: "Recibir notificaciones en tiempo real sobre demoras de vuelos." },
-                                { key: "hotelRecs", label: "Recomendaciones Inteligentes", desc: "Sugerir alojamientos cercanos basados en tu historial." },
-                                { key: "budgetAlerts", label: "Control de Presupuesto", desc: "Avisar cuando se supere el 80% del presupuesto de gastos." }
-                            ].map((prefItem) => (
-                                <div key={prefItem.key} className="flex items-start justify-between gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{prefItem.label}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{prefItem.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Alertas de Estado de Vuelo</h4>
+                                        <p className="text-xs text-slate-500 mt-0.5">Notificaciones de demoras (Próximamente)</p>
                                     </div>
                                     <button 
-                                        onClick={() => setPrefs(prev => ({ ...prev, [prefItem.key]: !prev[prefItem.key as keyof typeof prev] }))}
-                                        className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${prefs[prefItem.key as keyof typeof prefs] ? "bg-blue-500" : "bg-slate-200 dark:bg-slate-800"}`}
+                                        onClick={() => handleSavePrefs({ ...prefs, vueloAlerts: !prefs.vueloAlerts })}
+                                        className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${prefs.vueloAlerts ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`}
                                     >
-                                        <span className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${prefs[prefItem.key as keyof typeof prefs] ? "translate-x-5" : ""}`}></span>
+                                        <div className={`w-4 h-4 bg-white rounded-full absolute shadow-sm transition-transform duration-200 ${prefs.vueloAlerts ? 'translate-x-7' : 'translate-x-1'}`} />
                                     </button>
                                 </div>
-                            ))}
+                                
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Recomendaciones Inteligentes</h4>
+                                        <p className="text-xs text-slate-500 mt-0.5">Hoteles para tus destinos con IA</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleSavePrefs({ ...prefs, hotelRecs: !prefs.hotelRecs })}
+                                        className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${prefs.hotelRecs ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                    >
+                                        <div className={`w-4 h-4 bg-white rounded-full absolute shadow-sm transition-transform duration-200 ${prefs.hotelRecs ? 'translate-x-7' : 'translate-x-1'}`} />
+                                    </button>
+                                </div>
+                                
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Control de Presupuesto</h4>
+                                        <p className="text-xs text-slate-500 mt-0.5">Alerta cuando gastes más del 80%</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleSavePrefs({ ...prefs, budgetAlerts: !prefs.budgetAlerts })}
+                                        className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${prefs.budgetAlerts ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                    >
+                                        <div className={`w-4 h-4 bg-white rounded-full absolute shadow-sm transition-transform duration-200 ${prefs.budgetAlerts ? 'translate-x-7' : 'translate-x-1'}`} />
+                                    </button>
+                                </div>
                         </div>
                         <button onClick={() => setIsPrefsOpen(false)} className="w-full mt-6 py-3 font-bold rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/25">Aceptar</button>
                     </div>

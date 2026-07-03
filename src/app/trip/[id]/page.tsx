@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useTransition } from "react";
 import { ChevronLeft, CalendarDays, Clock, Plus, Loader2, PlaneLanding, Hotel, Car, MapPin, Activity as ActivityIcon, MoreHorizontal, Trash2 as TrashIcon, Trash2, Edit2, PlusCircle, AlertTriangle, Users, Map } from "lucide-react";
+import FlightStatusWidget from "@/components/FlightStatusWidget";
 import { travelService } from "@/lib/services";
 import { Trip, Destination, Activity, ActivityType } from "@/types/travel";
 import { format } from "date-fns";
@@ -417,7 +418,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             </div>
 
             {/* Main Content */}
-            <main className="max-w-lg mx-auto px-6 mt-4">
+            <main className="max-w-5xl mx-auto px-6 mt-4 w-full pb-52">
                 {view === "timeline" ? (
                     <div className="pb-12">
                         {destinations.map((dest, i) => (
@@ -511,6 +512,9 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                                         <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-4 p-4 bg-slate-50/80 dark:bg-slate-800/50 rounded-xl whitespace-pre-line border border-slate-200/50 dark:border-slate-700/50 relative z-10">
                                                             {activity.description}
                                                         </p>
+                                                    )}
+                                                    {activity.type === "flight" && (
+                                                        <FlightStatusWidget flightCode={activity.title.split(' ')[0] || "IB3456"} />
                                                     )}
                                                 </div>
                                             </div>
@@ -643,6 +647,9 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                                             <h4 className="font-bold text-base text-slate-900 dark:text-slate-100 mb-1 leading-tight pr-12">{act.title}</h4>
                                                             {act.description && (
                                                                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 pr-2">{act.description}</p>
+                                                            )}
+                                                            {act.type === "flight" && (
+                                                                <FlightStatusWidget flightCode={act.title.split(' ')[0] || "IB3456"} />
                                                             )}
                                                         </div>
 

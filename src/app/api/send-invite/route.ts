@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
     try {
-        const { to, tripName, inviterName, tripId } = await request.json();
+        const { to, tripName, inviterName, inviterPhoto, tripId } = await request.json();
 
         if (!to || !tripName) {
             return NextResponse.json(
@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
         // HTML Email Template - PROFESSIONAL DESIGN 🎨
         const htmlContent = `
@@ -29,8 +31,8 @@ export async function POST(request: NextRequest) {
                     <!-- Header -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 48px 40px; text-align: center;">
-                            <div style="width: 72px; height: 72px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 auto 20px; display: inline-flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-                                <span style="font-size: 40px;">✈️</span>
+                            <div style="margin-bottom: 20px;">
+                                <img src="${appUrl}/LogoApp.png" alt="CatchMe Logo" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); object-fit: cover;" />
                             </div>
                             <h1 style="margin: 0 0 8px; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Te invitaron a colaborar</h1>
                             <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 500;">En la planificación de un viaje</p>
@@ -45,9 +47,12 @@ export async function POST(request: NextRequest) {
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
                                 <tr>
                                     <td style="background: #F9FAFB; border-left: 4px solid #4F46E5; padding: 20px 24px; border-radius: 12px;">
-                                        <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                                            <strong style="color: #1F2937; font-weight: 600;">${inviterName || 'Un amigo'}</strong> te ha invitado a colaborar en la planificación de:
-                                        </p>
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            ${inviterPhoto ? `<img src="${inviterPhoto}" alt="${inviterName}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; display: inline-block; vertical-align: middle;" />` : ''}
+                                            <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6; display: inline-block; vertical-align: middle; padding-left: 12px;">
+                                                <strong style="color: #1F2937; font-weight: 600;">${inviterName || 'Un amigo'}</strong> te ha invitado a colaborar en la planificación de:
+                                            </p>
+                                        </div>
                                     </td>
                                 </tr>
                             </table>

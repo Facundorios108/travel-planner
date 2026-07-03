@@ -46,6 +46,7 @@ export default function ExpensesPage() {
     // Budget Editor states
     const [isEditingBudget, setIsEditingBudget] = useState(false);
     const [tempBudget, setTempBudget] = useState("");
+    const [budgetAlertsEnabled, setBudgetAlertsEnabled] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -78,6 +79,14 @@ export default function ExpensesPage() {
             }
         };
         loadData();
+
+        const loadPrefs = async () => {
+            if (user) {
+                const prefs = await travelService.getUserPreferences(user.uid);
+                if (prefs?.budgetAlerts) setBudgetAlertsEnabled(true);
+            }
+        };
+        loadPrefs();
     }, [tripId, user]);
 
     const handleSaveExpense = async (data: any) => {
@@ -385,7 +394,7 @@ export default function ExpensesPage() {
                 )}
             </header>
 
-            <main className="flex-1 px-6 pb-24">
+            <main className="flex-1 px-6 pb-52">
                 {/* Summary Card */}
                 <div className="mt-2 mb-6 p-8 rounded-[2.5rem] bg-gradient-to-br from-blue-100/80 to-blue-200/40 dark:from-blue-900/40 dark:to-blue-800/20 relative overflow-hidden shadow-sm border border-white/20 dark:border-white/5">
                     <div className="absolute -right-8 -top-8 w-40 h-40 bg-blue-200/50 dark:bg-blue-500/10 rounded-full blur-3xl"></div>

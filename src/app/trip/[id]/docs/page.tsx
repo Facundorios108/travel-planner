@@ -210,7 +210,7 @@ export default function DocumentsPage() {
                 <div className="w-12 h-12 invisible"></div>
             </header>
 
-            <main className="flex-1 w-full pb-24">
+            <main className="flex-1 w-full pb-52">
                 {/* Search Bar */}
                 <div className="px-6 py-3">
                     <div className="flex w-full items-center rounded-2xl h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm px-4 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">

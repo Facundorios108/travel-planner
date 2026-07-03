@@ -8,6 +8,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { Toast, useToast } from "./Toast";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { hapticFeedback } from "@/utils/haptics";
+import HotelRecommendations from "./HotelRecommendations";
 import {
     Briefcase, CheckSquare, Square, Plus, Trash2,
     Sparkles, RefreshCw, DollarSign, CloudSun,
@@ -221,7 +222,18 @@ function PackingListItem({ item, isFinalized, onToggle, onDelete }: PackingListI
 export default function TravelTools({ trips }: TravelToolsProps) {
     const { user } = useAuth();
     const { showToast, ToastComponent } = useToast();
-    const [subTab, setSubTab] = useState<"packing" | "destination" | "currency">("packing");
+    const [subTab, setSubTab] = useState<"packing" | "destination" | "currency" | "hotels">("packing");
+    const [hotelRecsEnabled, setHotelRecsEnabled] = useState(false);
+
+    useEffect(() => {
+        const loadPrefs = async () => {
+            if (user) {
+                const prefs = await travelService.getUserPreferences(user.uid);
+                if (prefs?.hotelRecs) setHotelRecsEnabled(true);
+            }
+        };
+        loadPrefs();
+    }, [user]);
 
     // ─── Packing States ───
     const [packingList, setPackingList] = useState<PackingItem[]>([]);
@@ -286,6 +298,20 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     // Load packing list when trip changes
     useEffect(() => {
         if (!user || !selectedTripId) return;
+        
+        const currentTrip = trips.find(t => t.id === selectedTripId);
+        
+        // 1. Check if Firebase has the packing list
+        if (currentTrip?.packingList) {
+            const data: PackingData = currentTrip.packingList;
+            setPackingList(data.items || []);
+            setActiveProfile(data.activeProfile || "");
+            setIsFinalized(data.isFinalized || false);
+            setFinalizedAt(data.finalizedAt || "");
+            return;
+        }
+
+        // 2. Fallback to localStorage (Migration from older version)
         const key = `catchme_packing_${user.uid}_${selectedTripId}`;
         const stored = localStorage.getItem(key);
         if (stored) {
@@ -295,6 +321,10 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                 setActiveProfile(data.activeProfile || "");
                 setIsFinalized(data.isFinalized || false);
                 setFinalizedAt(data.finalizedAt || "");
+                
+                // Migrate to Firebase automatically
+                travelService.updateTrip(selectedTripId, { packingList: data }).catch(console.error);
+                localStorage.removeItem(key); // Clean up old storage
             } catch {
                 setPackingList([]);
                 setActiveProfile("");
@@ -307,9 +337,9 @@ export default function TravelTools({ trips }: TravelToolsProps) {
             setIsFinalized(false);
             setFinalizedAt("");
         }
-    }, [user, selectedTripId]);
+    }, [user, selectedTripId, trips]);
 
-    const saveList = useCallback((list: PackingItem[], profile?: string, finalized?: boolean, finAt?: string) => {
+    const saveList = useCallback(async (list: PackingItem[], profile?: string, finalized?: boolean, finAt?: string) => {
         setPackingList(list);
         if (profile !== undefined) setActiveProfile(profile);
         const fin = finalized !== undefined ? finalized : isFinalized;
@@ -324,7 +354,13 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                 isFinalized: fin,
                 finalizedAt: fat,
             };
-            localStorage.setItem(`catchme_packing_${user.uid}_${selectedTripId}`, JSON.stringify(data));
+            
+            // Save to Firebase (Optimistic UI update)
+            try {
+                await travelService.updateTrip(selectedTripId, { packingList: data });
+            } catch (err) {
+                console.error("Error saving packing list to Firebase:", err);
+            }
         }
     }, [user, selectedTripId, activeProfile, isFinalized, finalizedAt]);
 
@@ -1274,6 +1310,15 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                             )}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* ═══════════════════════════════════════ */}
+            {/* TAB: HOTELS (AI RECS)                 */}
+            {/* ═══════════════════════════════════════ */}
+            {subTab === "hotels" && (
+                <div className="mt-8 animate-in slide-in-from-bottom-4 duration-300">
+                    <HotelRecommendations trips={trips} />
                 </div>
             )}
 

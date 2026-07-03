@@ -126,7 +126,7 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-[430px]">
+        <div className="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 mx-auto max-w-7xl w-full">
             {/* Modern Header */}
             {activeTab !== "profile" && (
                 <header className="sticky top-0 z-50 flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm transition-all duration-200">
@@ -167,15 +167,13 @@ export default function Dashboard() {
 
                         {/* Floating Action Button for Nuevo Viaje */}
                         {activeTab === "home" && (
-                            <div className="fixed bottom-44 w-full max-w-[430px] pointer-events-none z-40 left-1/2 -translate-x-1/2">
-                                <div className="absolute right-4">
-                                    <button
-                                        onClick={() => setIsAddingTrip(true)}
+                            <div className="fixed bottom-28 md:bottom-8 right-1/2 md:right-8 translate-x-1/2 md:translate-x-0 z-40 pointer-events-none">
+                                <button
+                                    onClick={() => setIsAddingTrip(true)}
                                         className="w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 pointer-events-auto group"
                                     >
                                         <Plus size={28} className="transition-transform group-hover:rotate-90" />
-                                    </button>
-                                </div>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -226,7 +224,7 @@ export default function Dashboard() {
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="fixed bottom-[calc(env(safe-area-inset-bottom)+16px)] left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-[400px] z-50 glass rounded-[2rem] shadow-2xl overflow-hidden">
+            <nav className="fixed bottom-[calc(env(safe-area-inset-bottom)+16px)] left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-md z-50 glass rounded-[2rem] shadow-2xl overflow-hidden">
                 <div className="flex justify-around items-center px-1 py-3">
                     <button
                         onClick={() => handleTabChange("home")}

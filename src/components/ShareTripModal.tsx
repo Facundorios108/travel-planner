@@ -64,7 +64,8 @@ export function ShareTripModal({ isOpen, onClose, trip, onTripUpdate }: ShareTri
 
         try {
             const inviterName = user?.displayName || user?.email?.split('@')[0] || 'Un amigo';
-            const res = await travelService.inviteCollaborator(trip.id, email.trim(), inviterName);
+            const inviterPhoto = user?.photoURL || undefined;
+            const res = await travelService.inviteCollaborator(trip.id, email.trim(), inviterName, inviterPhoto);
             if (res.success) {
                 setSuccess(true);
                 setEmail("");

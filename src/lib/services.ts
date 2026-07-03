@@ -183,7 +183,7 @@ export const travelService = {
         dataCache.invalidatePattern(new RegExp(`^.*:trip:${tripId}$`));
     },
 
-    async inviteCollaborator(tripId: string, email: string, inviterName?: string): Promise<{ success: boolean; message: string }> {
+    async inviteCollaborator(tripId: string, email: string, inviterName?: string, inviterPhoto?: string): Promise<{ success: boolean; message: string }> {
         try {
             const cleanEmail = email.trim().toLowerCase();
             const tripSnap = await getDoc(doc(db, "trips", tripId));
@@ -208,6 +208,7 @@ export const travelService = {
                         to: cleanEmail,
                         tripName: tripData.name || 'Tu viaje',
                         inviterName: inviterName || 'Un amigo',
+                        inviterPhoto: inviterPhoto,
                         tripId: tripId
                     })
                 });
@@ -524,6 +525,33 @@ export const travelService = {
 
         // Invalidate cache
         const cacheKey = `passport:user:${userId}`;
+        dataCache.invalidate(cacheKey);
+    },
+
+    async getUserPreferences(userId: string): Promise<any> {
+        const cacheKey = `prefs:user:${userId}`;
+        const cached = dataCache.get(cacheKey);
+        if (cached) return cached;
+
+        try {
+            const docRef = doc(db, "userPrefs", userId);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                const prefs = snap.data();
+                dataCache.set(cacheKey, prefs, 30 * 60 * 1000); // 30 minutes cache
+                return prefs;
+            }
+            return { vueloAlerts: true, hotelRecs: false, budgetAlerts: true };
+        } catch (error) {
+            console.error("Error fetching user preferences:", error);
+            return { vueloAlerts: true, hotelRecs: false, budgetAlerts: true };
+        }
+    },
+
+    async saveUserPreferences(userId: string, prefs: any): Promise<void> {
+        const docRef = doc(db, "userPrefs", userId);
+        await setDoc(docRef, prefs, { merge: true });
+        const cacheKey = `prefs:user:${userId}`;
         dataCache.invalidate(cacheKey);
     },
 };

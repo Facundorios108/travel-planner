@@ -12,6 +12,7 @@ export interface Trip {
     description?: string;
     destination?: string;
     budget?: number;
+    packingList?: any; // Stores PackingData
 }
 
 export interface UserSettings {

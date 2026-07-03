@@ -134,7 +134,7 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col max-w-[430px] mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+        <div className="relative flex min-h-screen w-full flex-col max-w-3xl mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
             {ToastComponent}
             {/* Custom Styles for Timeline Line */}
             <style jsx>{`
@@ -278,7 +278,13 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                                                         type="date"
                                                         required
                                                         value={dest.startDate}
-                                                        onChange={(e) => updateDestination(dest.id, "startDate", e.target.value)}
+                                                        onChange={(e) => {
+                                                            const newStart = e.target.value;
+                                                            updateDestination(dest.id, "startDate", newStart);
+                                                            if (!dest.endDate || newStart > dest.endDate) {
+                                                                updateDestination(dest.id, "endDate", newStart);
+                                                            }
+                                                        }}
                                                         className="w-full bg-transparent outline-none text-slate-800 dark:text-slate-100 text-xs font-bold [color-scheme:light] dark:[color-scheme:dark]"
                                                     />
                                                 </div>
