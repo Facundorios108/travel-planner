@@ -15,7 +15,7 @@ import {
     deleteField,
     setDoc,
 } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { ref, uploadString, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Trip, Activity, Destination, Expense, UserSettings, UserPassport, PassportCountry } from "@/types/travel";
 import { dataCache, cacheKeys } from "@/utils/dataCache";
 
@@ -25,6 +25,33 @@ export const travelService = {
         const storageRef = ref(storage, path);
         await uploadString(storageRef, base64Data, 'data_url');
         return await getDownloadURL(storageRef);
+    },
+
+    async uploadProfilePhoto(userId: string, file: File): Promise<string> {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const storageRef = ref(storage, `profile-photos/${userId}.${ext}`);
+        await uploadBytes(storageRef, file, { contentType: file.type });
+        return await getDownloadURL(storageRef);
+    },
+
+    // Profile photo stored in Firestore (no Storage plan required)
+    async saveUserPhoto(userId: string, photoBase64: string): Promise<void> {
+        const docRef = doc(db, "users", userId);
+        await setDoc(docRef, { photoBase64, updatedAt: new Date() }, { merge: true });
+        dataCache.invalidate(`user:photo:${userId}`);
+    },
+
+    async getUserPhoto(userId: string): Promise<string | null> {
+        const cacheKey = `user:photo:${userId}`;
+        const cached = dataCache.get<string>(cacheKey);
+        if (cached) return cached;
+
+        const docRef = doc(db, "users", userId);
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) return null;
+        const photo = snap.data().photoBase64 || null;
+        if (photo) dataCache.set(cacheKey, photo, 30 * 60 * 1000);
+        return photo;
     },
     // User Profile
     async saveUserProfile(userId: string, email: string | null, displayName: string | null): Promise<void> {
@@ -408,10 +435,17 @@ export const travelService = {
             ...data,
             createdAt: serverTimestamp()
         });
+        // Invalidate cache
+        dataCache.invalidate(cacheKeys.tripExpenses(data.tripId));
         return docRef.id;
     },
 
     async getTripExpenses(tripId: string): Promise<Expense[]> {
+        // Check cache first
+        const cacheKey = cacheKeys.tripExpenses(tripId);
+        const cached = dataCache.get<Expense[]>(cacheKey);
+        if (cached) return cached;
+
         const q = query(
             collection(db, "expenses"),
             where("tripId", "==", tripId)
@@ -429,17 +463,24 @@ export const travelService = {
         });
 
         // Sort by date descending (newest first)
-        return expenses.sort((a, b) => b.date.getTime() - a.date.getTime());
+        const sorted = expenses.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        // Cache for 10 minutes
+        dataCache.set(cacheKey, sorted, 10 * 60 * 1000);
+
+        return sorted;
     },
 
-    async deleteExpense(id: string): Promise<void> {
+    async deleteExpense(id: string, tripId?: string): Promise<void> {
         const docRef = doc(db, "expenses", id);
         await deleteDoc(docRef);
+        if (tripId) dataCache.invalidate(cacheKeys.tripExpenses(tripId));
     },
 
-    async updateExpense(id: string, data: Partial<Expense>): Promise<void> {
+    async updateExpense(id: string, data: Partial<Expense>, tripId?: string): Promise<void> {
         const docRef = doc(db, "expenses", id);
         await updateDoc(docRef, data);
+        if (tripId) dataCache.invalidate(cacheKeys.tripExpenses(tripId));
     },
 
     // Documents
@@ -448,10 +489,17 @@ export const travelService = {
             ...data,
             createdAt: serverTimestamp()
         });
+        // Invalidate cache
+        dataCache.invalidate(cacheKeys.tripDocuments(data.tripId));
         return docRef.id;
     },
 
     async getTripDocuments(tripId: string): Promise<import("@/types/travel").TripDocument[]> {
+        // Check cache first
+        const cacheKey = cacheKeys.tripDocuments(tripId);
+        const cached = dataCache.get<import("@/types/travel").TripDocument[]>(cacheKey);
+        if (cached) return cached;
+
         const q = query(
             collection(db, "documents"),
             where("tripId", "==", tripId)
@@ -467,12 +515,18 @@ export const travelService = {
             } as import("@/types/travel").TripDocument;
         });
 
-        return documents.sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+        const sorted = documents.sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+
+        // Cache for 10 minutes
+        dataCache.set(cacheKey, sorted, 10 * 60 * 1000);
+
+        return sorted;
     },
 
-    async deleteDocument(id: string): Promise<void> {
+    async deleteDocument(id: string, tripId?: string): Promise<void> {
         const docRef = doc(db, "documents", id);
         await deleteDoc(docRef);
+        if (tripId) dataCache.invalidate(cacheKeys.tripDocuments(tripId));
     },
 
     // Passport Map Services

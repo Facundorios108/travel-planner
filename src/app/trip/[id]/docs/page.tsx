@@ -84,7 +84,7 @@ export default function DocumentsPage() {
             message: `¿Estás seguro de que deseas eliminar "${docItem.title}"?`,
             onConfirm: async () => {
                 try {
-                    await travelService.deleteDocument(docItem.id!);
+                    await travelService.deleteDocument(docItem.id!, tripId);
                     if (docItem.url?.startsWith("localcache_")) {
                         await deleteDocumentFromCache(docItem.url);
                     }

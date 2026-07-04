@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendMail } from '@/lib/mailer';
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
                     <tr>
                         <td style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 48px 40px; text-align: center;">
                             <div style="margin-bottom: 20px;">
-                                <img src="${appUrl}/LogoApp.png" alt="CatchMe Logo" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); object-fit: cover;" />
+                                <img src="${process.env.NEXT_PUBLIC_APP_URL || appUrl}/email-logo.png" alt="CatchMe" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); object-fit: cover;" />
                             </div>
                             <h1 style="margin: 0 0 8px; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Te invitaron a colaborar</h1>
                             <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 500;">En la planificación de un viaje</p>
@@ -171,32 +172,19 @@ export async function POST(request: NextRequest) {
 </html>
         `;
 
-        // Send email with Resend
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
+        // Send email with Nodemailer + Gmail
         try {
-            const { data, error } = await resend.emails.send({
-                from: 'CatchMe <onboarding@resend.dev>', // Usaremos el dominio de prueba de Resend
+            await sendMail({
                 to: [to],
                 subject: `¡Te invitaron a colaborar en ${tripName}!`,
                 html: htmlContent,
             });
 
-            if (error) {
-                console.error('[RESEND ERROR]:', error);
-                return NextResponse.json({
-                    success: false,
-                    error: 'Error al enviar email: ' + error.message
-                }, { status: 500 });
-            }
+            console.log(`[EMAIL SENT] To: ${to}`);
 
-            console.log(`[EMAIL SENT] To: ${to}, ID: ${data?.id}`);
-            
             return NextResponse.json({
                 success: true,
                 message: 'Email enviado correctamente',
-                emailId: data?.id
             });
 
         } catch (emailError: any) {

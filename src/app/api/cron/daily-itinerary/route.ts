@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
-import { Resend } from 'resend';
+import { sendMail } from '@/lib/mailer';
 import fs from 'fs';
 import path from 'path';
-
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET(request: Request) {
     // 1. Validate authorization
@@ -23,23 +20,30 @@ export async function GET(request: Request) {
     }
 
     try {
-        // 2. Determine "tomorrow" date range
-        // Note: For a globally scaled app, timezones are tricky. 
-        // We will assume "tomorrow" based on UTC time of execution.
+        // 2. Determine the search window for "tomorrow" across all timezones.
+        // UTC-12 to UTC+14 means "tomorrow" can span up to 48h from UTC midnight.
+        // We query a 48-hour window starting from UTC midnight tonight to capture
+        // activities that are "tomorrow" in any timezone.
         const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
         
-        const startOfTomorrow = new Date(tomorrow);
-        startOfTomorrow.setHours(0, 0, 0, 0);
-        
-        const endOfTomorrow = new Date(tomorrow);
-        endOfTomorrow.setHours(23, 59, 59, 999);
+        // Start: beginning of tomorrow UTC (covers UTC+14 users whose "tomorrow" starts early)
+        const startOfWindow = new Date(now);
+        startOfWindow.setUTCHours(0, 0, 0, 0);
+        startOfWindow.setUTCDate(startOfWindow.getUTCDate() + 1);
 
-        // 3. Query all activities happening tomorrow
+        // End: end of the day after tomorrow UTC (covers UTC-12 users whose "tomorrow" ends late)
+        const endOfWindow = new Date(startOfWindow);
+        endOfWindow.setUTCDate(endOfWindow.getUTCDate() + 1);
+        endOfWindow.setUTCHours(23, 59, 59, 999);
+
+        // Keep a reference date string for the email subject (UTC tomorrow)
+        const tomorrow = new Date(startOfWindow);
+        const startOfTomorrow = startOfWindow;
+
+        // 3. Query all activities in the 48-hour window
         const activitiesSnapshot = await adminDb.collection('activities')
-            .where('startDate', '>=', startOfTomorrow)
-            .where('startDate', '<=', endOfTomorrow)
+            .where('startDate', '>=', startOfWindow)
+            .where('startDate', '<=', endOfWindow)
             .get();
 
         if (activitiesSnapshot.empty) {
@@ -93,22 +97,19 @@ export async function GET(request: Request) {
             const htmlContent = generateEmailHtml(trip.name, dateString, activities, tripId, appUrl);
 
             // Send Email
-            // Make subject unique to avoid Gmail grouping and hiding content behind 3 dots during testing
-            const uniqueSubject = process.env.NODE_ENV !== 'production' 
+            const uniqueSubject = process.env.NODE_ENV !== 'production'
                 ? `📅 Tu itinerario para mañana: ${trip.name} (Prueba ${new Date().getTime()})`
                 : `📅 Tu itinerario para mañana: ${trip.name}`;
 
-            const { data, error } = await resend.emails.send({
-                from: 'CatchMe <onboarding@resend.dev>', // Change this when domain is verified
-                to: Array.from(recipients),
-                subject: uniqueSubject,
-                html: htmlContent,
-            });
-
-            if (error) {
-                console.error(`Failed to send email for trip ${tripId}:`, error);
-            } else {
+            try {
+                await sendMail({
+                    to: Array.from(recipients),
+                    subject: uniqueSubject,
+                    html: htmlContent,
+                });
                 emailsSent.push({ tripId, recipients: Array.from(recipients) });
+            } catch (emailErr: any) {
+                console.error(`Failed to send email for trip ${tripId}:`, emailErr.message);
             }
         }
 
@@ -134,8 +135,9 @@ function formatTime(dateObj: any) {
 // Helper to generate the email HTML
 function generateEmailHtml(tripName: string, dateString: string, activities: any[], tripId: string, appUrl: string) {
     const tripUrl = `${appUrl}/trip/${tripId}`;
-
-    const headerLogo = `<img src="${appUrl}/LogoApp.png" alt="CatchMe Logo" style="width: 64px; height: 64px; margin-bottom: 16px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background-color: #ffffff; object-fit: cover;" />`;
+    // Use production URL for logo so Gmail can load it; falls back to appUrl in dev
+    const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL || appUrl}/email-logo.png`;
+    const headerLogo = `<img src="${logoUrl}" alt="CatchMe" style="width: 64px; height: 64px; margin-bottom: 16px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background-color: #ffffff; object-fit: cover;" />`;
 
     const activitiesHtml = activities.map(act => `
         <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">

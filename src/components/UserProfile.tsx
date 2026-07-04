@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User } from "firebase/auth";
+import { User, updateProfile } from "firebase/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { Trip } from "@/types/travel";
 import { Settings, Edit2, Sliders, CreditCard, HelpCircle, LogOut, X, Check, Mail, MessageSquare, AlertTriangle, ShieldCheck, BookOpen, Calendar, User as UserIcon, FileText, Globe, ChevronRight, Loader2, Trash2 } from "lucide-react";
@@ -22,7 +22,39 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
     const docsSaved = trips.reduce((acc, trip) => acc + (trip.collaborators?.length || 0), 0) + (tripsCount * 3);
 
     const [displayName, setDisplayName] = useState(user?.displayName || user?.email?.split('@')[0] || "Viajero");
+    const [photoURL, setPhotoURL] = useState(user?.photoURL || "");
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [photoError, setPhotoError] = useState("");
     const userInitial = displayName[0]?.toUpperCase() || "U";
+
+    // Load photo from Firestore on mount (fallback when Firebase Auth photoURL is empty)
+    React.useEffect(() => {
+        if (!user || photoURL) return;
+        travelService.getUserPhoto(user.uid).then(p => {
+            if (p) setPhotoURL(p);
+        }).catch(console.error);
+    }, [user]);
+
+    // Compress image client-side using Canvas API (max 400×400, JPEG 88%)
+    const compressImage = (file: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+                const MAX = 400;
+                let w = img.width, h = img.height;
+                if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+                else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+                const canvas = document.createElement("canvas");
+                canvas.width = w;
+                canvas.height = h;
+                canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL("image/jpeg", 0.88));
+            };
+            img.onerror = reject;
+            img.src = objectUrl;
+        });
 
     // Sheets & Modal states
     const [activeStatDetail, setActiveStatDetail] = useState<"trips" | "countries" | "docs" | null>(null);
@@ -288,7 +320,36 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
         e.preventDefault();
         if (tempName.trim()) {
             setDisplayName(tempName.trim());
+            if (user) updateProfile(user, { displayName: tempName.trim() }).catch(console.error);
             setIsEditProfileOpen(false);
+        }
+    };
+
+    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+
+        if (!file.type.startsWith("image/")) {
+            setPhotoError("El archivo debe ser una imagen.");
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            setPhotoError("La imagen debe pesar menos de 10MB.");
+            return;
+        }
+
+        setPhotoError("");
+        setIsUploadingPhoto(true);
+        try {
+            const compressed = await compressImage(file);
+            await travelService.saveUserPhoto(user.uid, compressed);
+            setPhotoURL(compressed);
+        } catch (err: any) {
+            console.error("Error saving photo:", err);
+            setPhotoError("Error al guardar la foto. Intentá de nuevo.");
+        } finally {
+            setIsUploadingPhoto(false);
+            e.target.value = "";
         }
     };
 
@@ -337,18 +398,50 @@ Saludos!`;
             {/* Profile Section */}
             <div className="flex flex-col items-center pt-2 pb-8 px-6">
                 <div className="relative">
-                    <div className="bg-[#1877F2]/10 aspect-square rounded-[2rem] w-32 h-32 border-[0.5rem] border-white dark:border-slate-950 shadow-sm flex items-center justify-center text-[#1877F2] text-5xl font-bold uppercase transition-transform hover:scale-105">
-                        {userInitial}
-                    </div>
-                    <button 
-                        onClick={() => { setTempName(displayName); setIsEditProfileOpen(true); }}
-                        className="absolute bottom-1 right-1 bg-[#1877F2] text-white p-2 rounded-full border-4 border-white dark:border-slate-950 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+                    {/* Use label+id so file picker works reliably on iOS/PWA */}
+                    <input
+                        id="profile-photo-input"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                        disabled={isUploadingPhoto}
+                    />
+                    <label
+                        htmlFor="profile-photo-input"
+                        className="block bg-[#1877F2]/10 aspect-square rounded-[2rem] w-32 h-32 border-[0.5rem] border-white dark:border-slate-950 shadow-sm flex items-center justify-center text-[#1877F2] text-5xl font-bold uppercase overflow-hidden cursor-pointer relative"
+                    >
+                        {photoURL ? (
+                            <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+                        ) : (
+                            userInitial
+                        )}
+                        {isUploadingPhoto && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-[1.5rem]">
+                                <Loader2 size={28} className="text-white animate-spin" />
+                            </div>
+                        )}
+                    </label>
+                    <label
+                        htmlFor="profile-photo-input"
+                        className="absolute bottom-1 right-1 bg-[#1877F2] text-white p-2 rounded-full border-4 border-white dark:border-slate-950 flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                     >
                         <Edit2 size={16} strokeWidth={2.5} />
-                    </button>
+                    </label>
                 </div>
+                {photoError && (
+                    <p className="mt-2 text-xs text-red-500 font-medium text-center max-w-[200px]">{photoError}</p>
+                )}
                 <div className="mt-5 text-center">
-                    <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">{displayName}</h2>
+                    <div className="flex items-center justify-center gap-2">
+                        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">{displayName}</h2>
+                        <button
+                            onClick={() => { setTempName(displayName); setIsEditProfileOpen(true); }}
+                            className="text-slate-400 hover:text-blue-500 transition-colors"
+                        >
+                            <Edit2 size={14} />
+                        </button>
+                    </div>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">{user?.email}</p>
                 </div>
             </div>

@@ -319,20 +319,6 @@ export default function AddTrip({ onBack, onTripCreated }: { onBack: () => void,
                             <span>Añadir escala al viaje</span>
                         </button>
                     </div>
-
-                    {/* Temporary Map Visualizer Placeholder */}
-                    <div className="pt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="w-full aspect-[21/9] rounded-[2rem] bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-200/50 dark:border-slate-800/50 shadow-inner">
-                            <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center opacity-60 grayscale dark:opacity-20" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent"></div>
-                            <div className="absolute bottom-4 left-4">
-                                <div className="flex items-center gap-2">
-                                    <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Trazando ruta del mapa...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </form>
             </main>
 

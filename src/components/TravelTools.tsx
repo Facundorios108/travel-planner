@@ -298,46 +298,55 @@ export default function TravelTools({ trips }: TravelToolsProps) {
     // Load packing list when trip changes
     useEffect(() => {
         if (!user || !selectedTripId) return;
-        
-        const currentTrip = trips.find(t => t.id === selectedTripId);
-        
-        // 1. Check if Firebase has the packing list
-        if (currentTrip?.packingList) {
-            const data: PackingData = currentTrip.packingList;
-            setPackingList(data.items || []);
-            setActiveProfile(data.activeProfile || "");
-            setIsFinalized(data.isFinalized || false);
-            setFinalizedAt(data.finalizedAt || "");
-            return;
-        }
 
-        // 2. Fallback to localStorage (Migration from older version)
-        const key = `catchme_packing_${user.uid}_${selectedTripId}`;
-        const stored = localStorage.getItem(key);
-        if (stored) {
-            try {
-                const data: PackingData = JSON.parse(stored);
+        let cancelled = false;
+
+        const loadPackingList = async () => {
+            // Fetch trip directly from Firebase to guarantee packingList is present
+            const currentTrip = await travelService.getTrip(selectedTripId);
+            if (cancelled) return;
+
+            // 1. Check if Firebase has the packing list
+            if (currentTrip?.packingList) {
+                const data: PackingData = currentTrip.packingList;
                 setPackingList(data.items || []);
                 setActiveProfile(data.activeProfile || "");
                 setIsFinalized(data.isFinalized || false);
                 setFinalizedAt(data.finalizedAt || "");
-                
-                // Migrate to Firebase automatically
-                travelService.updateTrip(selectedTripId, { packingList: data }).catch(console.error);
-                localStorage.removeItem(key); // Clean up old storage
-            } catch {
+                return;
+            }
+
+            // 2. Fallback to localStorage (Migration from older version)
+            const key = `catchme_packing_${user.uid}_${selectedTripId}`;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+                try {
+                    const data: PackingData = JSON.parse(stored);
+                    setPackingList(data.items || []);
+                    setActiveProfile(data.activeProfile || "");
+                    setIsFinalized(data.isFinalized || false);
+                    setFinalizedAt(data.finalizedAt || "");
+
+                    // Migrate to Firebase automatically
+                    travelService.updateTrip(selectedTripId, { packingList: data }).catch(console.error);
+                    localStorage.removeItem(key); // Clean up old storage
+                } catch {
+                    setPackingList([]);
+                    setActiveProfile("");
+                    setIsFinalized(false);
+                    setFinalizedAt("");
+                }
+            } else {
                 setPackingList([]);
                 setActiveProfile("");
                 setIsFinalized(false);
                 setFinalizedAt("");
             }
-        } else {
-            setPackingList([]);
-            setActiveProfile("");
-            setIsFinalized(false);
-            setFinalizedAt("");
-        }
-    }, [user, selectedTripId, trips]);
+        };
+
+        loadPackingList();
+        return () => { cancelled = true; };
+    }, [user, selectedTripId]);
 
     const saveList = useCallback(async (list: PackingItem[], profile?: string, finalized?: boolean, finAt?: string) => {
         setPackingList(list);

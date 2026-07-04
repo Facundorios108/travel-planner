@@ -106,7 +106,7 @@ export default function ExpensesPage() {
         if (!selectedExpense) return;
         try {
             const updatedData = { ...selectedExpense, ...data };
-            await travelService.updateExpense(selectedExpense.id, data);
+            await travelService.updateExpense(selectedExpense.id, data, tripId);
             setExpenses(expenses.map(e => e.id === selectedExpense.id ? updatedData : e));
             setIsAddExpenseModalOpen(false);
             setSelectedExpense(null);
@@ -120,7 +120,7 @@ export default function ExpensesPage() {
     const handleDeleteExpense = async () => {
         if (!selectedExpense) return;
         try {
-            await travelService.deleteExpense(selectedExpense.id);
+            await travelService.deleteExpense(selectedExpense.id, tripId);
             setExpenses(expenses.filter(e => e.id !== selectedExpense.id));
             setIsAddExpenseModalOpen(false);
             setSelectedExpense(null);
@@ -438,23 +438,41 @@ export default function ExpensesPage() {
                     </div>
                 </div>
 
+                {/* Budget Alert Banner */}
+                {budgetAlertsEnabled && trip.budget && trip.budget > 0 && percent >= 80 && (
+                    <div className={`mb-6 flex items-start gap-3 px-5 py-4 rounded-2xl border ${percent >= 100 ? "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-400" : "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400"}`}>
+                        <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-bold text-sm">
+                                {percent >= 100 ? "¡Presupuesto superado!" : "Advertencia de presupuesto"}
+                            </p>
+                            <p className="text-xs mt-0.5 opacity-80">
+                                {percent >= 100
+                                    ? `Gastaste ${percent - 100}% más de tu presupuesto (${formatMoney(totalAmount)} de ${formatMoney(trip.budget)}).`
+                                    : `Usaste el ${percent}% de tu presupuesto. Solo te quedan ${formatMoney(trip.budget - totalAmount)}.`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Tabs */}
                 <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl mb-8">
                     <button
                         onClick={() => setActiveTab("list")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "list" ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "list" ? "bg-white dark:bg-slate-800 ring-1 ring-blue-500/20 text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
                     >
                         <CreditCard size={18} /> Transacciones
                     </button>
                     <button
                         onClick={() => setActiveTab("analytics")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "analytics" ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "analytics" ? "bg-white dark:bg-slate-800 ring-1 ring-blue-500/20 text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
                     >
                         <BarChart3 size={18} /> Análisis
                     </button>
                     <button
                         onClick={() => setActiveTab("balances")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "balances" ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "balances" ? "bg-white dark:bg-slate-800 ring-1 ring-blue-500/20 text-blue-600" : "text-slate-500 dark:text-slate-400"}`}
                     >
                         <Users size={18} /> Saldos
                     </button>
