@@ -4,16 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { Loader2, MapPin } from "lucide-react";
 
 interface SearchResult {
-    place_id: number;
+    place_id: string;
     display_name: string;
-    lat: string;
-    lon: string;
-    address?: {
-        city?: string;
-        town?: string;
-        village?: string;
-        country?: string;
-    }
+    city: string;
+    country: string;
 }
 
 interface LocationSearchProps {
@@ -54,11 +48,44 @@ export default function LocationSearch({ placeholder, value, onSelect, required 
 
             setLoading(true);
             try {
-                // Usando Nominatim API (gratis, límites amigables)
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`;
+                // Usando Komoot Photon API (basada en OpenStreetMap, optimizada para autocomplete)
+                // Con bias de ubicación para Buenos Aires, Argentina para favorecer búsquedas locales precisas.
+                const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lat=-34.6037&lon=-58.3816`;
                 const response = await fetch(url);
                 const data = await response.json();
-                setResults(data);
+                
+                if (data && data.features) {
+                    const formatted = data.features.map((feature: any) => {
+                        const props = feature.properties;
+                        const name = props.name || "";
+                        const street = props.street ? `${props.street}${props.housenumber ? " " + props.housenumber : ""}` : "";
+                        const city = props.city || props.town || props.village || "";
+                        const state = props.state || "";
+                        const country = props.country || "";
+
+                        const parts = [];
+                        // Si el nombre de la propiedad no es idéntico a otros datos geográficos, lo agregamos al inicio
+                        if (name && name !== street && name !== city && name !== state && name !== country) {
+                            parts.push(name);
+                        }
+                        if (street) parts.push(street);
+                        if (city) parts.push(city);
+                        if (state && state !== city) parts.push(state);
+                        if (country) parts.push(country);
+
+                        const displayName = parts.join(", ");
+
+                        return {
+                            place_id: `${props.osm_type || "N"}-${props.osm_id}`,
+                            display_name: displayName,
+                            city: city || name || "Lugar",
+                            country: country
+                        };
+                    });
+                    setResults(formatted);
+                } else {
+                    setResults([]);
+                }
                 setIsOpen(true);
             } catch (error) {
                 console.error("Error fetching locations:", error);
@@ -78,15 +105,9 @@ export default function LocationSearch({ placeholder, value, onSelect, required 
     }, [query, value]);
 
     const handleSelect = (result: SearchResult) => {
-        const city = result.address?.city || result.address?.town || result.address?.village || result.display_name.split(",")[0];
-        const country = result.address?.country || "";
-
-        // Se formatea el string visual
-        const displayValue = country ? `${city}, ${country}` : city;
-
-        setQuery(displayValue);
+        setQuery(result.display_name);
         setIsOpen(false);
-        onSelect({ city, country });
+        onSelect({ city: result.city, country: result.country });
     };
 
     return (

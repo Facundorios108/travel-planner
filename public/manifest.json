@@ -2,11 +2,29 @@
   "name": "CatchMe Travel Passport",
   "short_name": "CatchMe",
   "description": "Planifica tus viajes con IA y mantén tus gastos bajo control.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "categories": [
+    "travel",
+    "productivity"
+  ],
   "icons": [
+    {
+      "src": "/icon192-catchme.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon192_maskable-catchme.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/icon-catchme.png",
       "sizes": "512x512",

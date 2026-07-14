@@ -195,6 +195,7 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
             travelService.getUserPreferences(user.uid).then(fetchedPrefs => {
                 if (fetchedPrefs) {
                     setPrefs(fetchedPrefs);
+                    localStorage.setItem(`catchme_prefs_${user.uid}`, JSON.stringify(fetchedPrefs));
                 }
             }).catch(console.error);
         }
@@ -204,6 +205,7 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
         setPrefs(newPrefs);
         if (user) {
             try {
+                localStorage.setItem(`catchme_prefs_${user.uid}`, JSON.stringify(newPrefs));
                 await travelService.saveUserPreferences(user.uid, newPrefs);
             } catch (error) {
                 console.error("Error saving preferences", error);
@@ -1375,7 +1377,6 @@ Saludos!`;
                                                 <span className="text-2xl">{cMeta?.flag || "🏳️"}</span>
                                                 <div className="flex flex-col min-w-0 flex-1">
                                                     <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{cMeta?.spanishName || pc.code}</span>
-                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5">Código: {pc.code}</span>
                                                 </div>
                                             </div>
                                         );

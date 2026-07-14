@@ -1253,13 +1253,8 @@ export default function TravelTools({ trips }: TravelToolsProps) {
                                         
                                         if (rate.casa === "blue") {
                                             title = "Blue";
-                                            bg = "bg-indigo-500 text-white dark:bg-indigo-600 shadow-md shadow-indigo-500/15";
-                                            textCol = "text-white";
-                                            labelCol = "text-indigo-100";
                                         } else if (rate.casa === "tarjeta") {
                                             title = "Tarjeta";
-                                            bg = "bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40";
-                                            textCol = "text-indigo-600 dark:text-indigo-300";
                                         } else {
                                             title = "Oficial";
                                         }

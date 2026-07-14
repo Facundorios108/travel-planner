@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { X, PlaneLanding, Car, Activity as ActivityIcon, Calendar, MapPin, MoreHorizontal } from "lucide-react";
 import LocationSearch from "./LocationSearch";
+import CustomDateTimePicker from "./CustomDateTimePicker";
 import { Activity, ActivityType, Destination } from "@/types/travel";
 import { format } from "date-fns";
 
@@ -140,23 +141,33 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
 
                         {/* Title */}
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Título</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                {type === "flight" ? "Número de Vuelo" : "Título"}
+                            </label>
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Ej: Vuelo Madrid-Paris, Tour Coliseo..."
+                                placeholder={type === "flight" ? "Ej: AA931, IB3456, AR1300..." : "Ej: Vuelo Madrid-Paris, Tour Coliseo..."}
                                 className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 required
                             />
+                            {type === "flight" && (
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-1.5 leading-normal">
+                                    💡 Ingresa el código IATA del vuelo (ej: AA931 o AR1300) para rastrear su estado y horarios en vivo.
+                                </p>
+                            )}
                         </div>
 
                         {/* Location */}
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Ubicación / Dirección exacta <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                {type === "flight" ? "Aeropuerto de Salida / Origen" : "Ubicación / Dirección exacta"}{" "}
+                                <span className="text-slate-400 font-normal lowercase">(Opcional)</span>
+                            </label>
                             <div className="location-search-wrapper">
                                 <LocationSearch
-                                    placeholder="Ej: 7-Eleven Honolulu, Torre Eiffel..."
+                                    placeholder={type === "flight" ? "Ej: Aeropuerto de Ezeiza, EZE, JFK..." : "Ej: 7-Eleven Honolulu, Torre Eiffel..."}
                                     value={location}
                                     required={false}
                                     className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-slate-900 dark:text-slate-100 text-base font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
@@ -183,35 +194,22 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
 
                         {/* Dates */}
                         <div className="grid grid-cols-1 gap-4">
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Fecha/Hora Inicio</label>
-                                <input
-                                    type="datetime-local"
-                                    value={startDate}
-                                    onChange={(e) => {
-                                        const newStart = e.target.value;
-                                        setStartDate(newStart);
-                                        // Si endDate está vacío, auto-completar con la misma fecha
-                                        if (!endDate && newStart) {
-                                            setEndDate(newStart);
-                                        } else if (endDate && newStart > endDate) {
-                                            setEndDate(newStart); // Mover endDate hacia adelante si quedó atrás
-                                        }
-                                    }}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Fecha/Hora Fin <span className="text-slate-400 font-normal lowercase">(Opcional)</span></label>
-                                <input
-                                    type="datetime-local"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    min={startDate}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
-                                />
-                            </div>
+                            <CustomDateTimePicker
+                                label="Fecha/Hora Inicio"
+                                value={startDate}
+                                onChange={(newStart) => {
+                                    setStartDate(newStart);
+                                    if (endDate && newStart > endDate) {
+                                        setEndDate(newStart); // Mover endDate hacia adelante si quedó atrás
+                                    }
+                                }}
+                                required
+                            />
+                            <CustomDateTimePicker
+                                label="Fecha/Hora Fin (Opcional)"
+                                value={endDate}
+                                onChange={(newEnd) => setEndDate(newEnd)}
+                            />
                         </div>
 
                         {/* Description */}
