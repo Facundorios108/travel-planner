@@ -44,8 +44,8 @@ export interface Activity {
     location?: string;
     category?: string;
     notes?: string;
-    startDate: Date;
-    endDate?: Date;
+    startDate: string | Date;
+    endDate?: string | Date;
 }
 
 export type ExpenseCategory = 'flight' | 'accommodation' | 'food' | 'transport' | 'activities' | 'shopping' | 'other';

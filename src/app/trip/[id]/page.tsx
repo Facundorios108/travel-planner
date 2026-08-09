@@ -8,6 +8,7 @@ import { travelService } from "@/lib/services";
 import { Trip, Destination, Activity, ActivityType } from "@/types/travel";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
+import { formatNaiveDate, parseNaiveDate } from "@/lib/dateUtils";
 import { ActivityModal } from "@/components/ActivityModal";
 import { AddDestinationModal } from "@/components/AddDestinationModal";
 import { EditTripModal } from "@/components/EditTripModal";
@@ -191,7 +192,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             setActivities(activities.map(a => a.id === editingActivity.id ? { ...a, ...data } : a));
         } else {
             const id = await travelService.addActivity(data);
-            setActivities([...activities, { ...data, id }].sort((a, b) => a.startDate.getTime() - b.startDate.getTime()));
+            setActivities([...activities, { ...data, id }].sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))));
         }
     };
 
@@ -499,11 +500,11 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                                         </div>
                                                         <div className="text-right">
                                                             <span className="inline-block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200/60 dark:border-slate-700/60" suppressHydrationWarning>
-                                                                {typeof window !== "undefined" && format(activity.startDate, "HH:mm", { locale: es })}
-                                                                {activity.endDate && typeof window !== "undefined" && ` - ${format(activity.endDate, "HH:mm", { locale: es })}`}
+                                                                {typeof window !== "undefined" && formatNaiveDate(activity.startDate, "HH:mm")}
+                                                                {activity.endDate && typeof window !== "undefined" && ` - ${formatNaiveDate(activity.endDate, "HH:mm")}`}
                                                             </span>
                                                             <p className="text-[10px] text-slate-400 mt-2 uppercase font-bold tracking-widest" suppressHydrationWarning>
-                                                                {typeof window !== "undefined" && format(activity.startDate, "dd MMM yyyy", { locale: es })}
+                                                                {typeof window !== "undefined" && formatNaiveDate(activity.startDate, "dd MMM yyyy")}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -559,7 +560,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                             }
 
                             // Extract unique dates
-                            const uniqueDateStrings = Array.from(new Set(activities.map(act => format(act.startDate, "yyyy-MM-dd")))).sort();
+                            const uniqueDateStrings = Array.from(new Set(activities.map(act => formatNaiveDate(act.startDate, "yyyy-MM-dd")))).sort();
 
                             // Initialize selected date if not set
                             if (!selectedCalendarDate && uniqueDateStrings.length > 0) {
@@ -598,13 +599,13 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                                     {selectedCalendarDate ? format(new Date(selectedCalendarDate + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: es }) : ''}
                                                 </h3>
                                                 <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-bold px-3 py-1 rounded-full hidden sm:inline-block">
-                                                    {activities.filter(a => format(a.startDate, "yyyy-MM-dd") === selectedCalendarDate).length} act.
+                                                    {activities.filter(a => formatNaiveDate(a.startDate, "yyyy-MM-dd") === selectedCalendarDate).length} act.
                                                 </span>
                                             </div>
                                             {(() => {
                                                 const dayActs = activities
-                                                    .filter(a => format(a.startDate, "yyyy-MM-dd") === selectedCalendarDate)
-                                                    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+                                                    .filter(a => formatNaiveDate(a.startDate, "yyyy-MM-dd") === selectedCalendarDate)
+                                                    .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
                                                 
                                                 if (dayActs.length < 2) return null;
                                                 
@@ -627,8 +628,8 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                         </div>
 
                                         {activities
-                                            .filter(a => format(a.startDate, "yyyy-MM-dd") === selectedCalendarDate)
-                                            .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+                                            .filter(a => formatNaiveDate(a.startDate, "yyyy-MM-dd") === selectedCalendarDate)
+                                            .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)))
                                             .map((act) => {
                                                 const dest = destinations.find(d => d.id === act.destinationId);
                                                 return (
@@ -639,8 +640,8 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
                                                         <div className="flex-1 min-w-0 pt-1">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 <span className="text-sm font-black text-slate-800 dark:text-slate-200">
-                                                                    {format(act.startDate, "HH:mm", { locale: es })}
-                                                                    {act.endDate && ` - ${format(act.endDate, "HH:mm", { locale: es })}`}
+                                                                    {formatNaiveDate(act.startDate, "HH:mm")}
+                                                                    {act.endDate && ` - ${formatNaiveDate(act.endDate, "HH:mm")}`}
                                                                 </span>
                                                                 {dest && <span className="text-[10px] uppercase font-bold text-blue-500 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 px-2.5 py-0.5 rounded-md truncate border border-blue-100 dark:border-blue-900/30">{dest.city}</span>}
                                                             </div>

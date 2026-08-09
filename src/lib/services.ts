@@ -18,7 +18,7 @@ import {
 import { ref, uploadString, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Trip, Activity, Destination, Expense, UserSettings, UserPassport, PassportCountry } from "@/types/travel";
 import { dataCache, cacheKeys } from "@/utils/dataCache";
-
+import { toNaiveISOString } from "@/lib/dateUtils";
 export const travelService = {
     // Storage
     async uploadFile(path: string, base64Data: string): Promise<string> {
@@ -392,13 +392,27 @@ export const travelService = {
             ({
                 id: doc.id,
                 ...doc.data(),
-                startDate: doc.data().startDate?.toDate(),
-                endDate: doc.data().endDate?.toDate(),
+                startDate: typeof doc.data().startDate === 'string' 
+                    ? doc.data().startDate 
+                    : doc.data().startDate?.toDate 
+                        ? toNaiveISOString(doc.data().startDate.toDate()) 
+                        : doc.data().startDate,
+                endDate: doc.data().endDate 
+                    ? (typeof doc.data().endDate === 'string' 
+                        ? doc.data().endDate 
+                        : doc.data().endDate?.toDate 
+                            ? toNaiveISOString(doc.data().endDate.toDate()) 
+                            : doc.data().endDate)
+                    : undefined,
             } as Activity)
         );
 
         // Sort in memory by startDate
-        const sortedActivities = activities.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+        const sortedActivities = activities.sort((a, b) => {
+            const dateA = typeof a.startDate === 'string' ? a.startDate : '';
+            const dateB = typeof b.startDate === 'string' ? b.startDate : '';
+            return dateA.localeCompare(dateB);
+        });
         
         // Cache for 10 minutes (increased from 5)
         dataCache.set(cacheKey, sortedActivities, 10 * 60 * 1000);

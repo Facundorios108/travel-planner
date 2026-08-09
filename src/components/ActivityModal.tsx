@@ -5,6 +5,7 @@ import LocationSearch from "./LocationSearch";
 import CustomDateTimePicker from "./CustomDateTimePicker";
 import { Activity, ActivityType, Destination } from "@/types/travel";
 import { format } from "date-fns";
+import { toNaiveISOString } from "@/lib/dateUtils";
 
 interface ActivityModalProps {
     isOpen: boolean;
@@ -44,8 +45,20 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
             setType(existingActivity.type || "activity");
             setDestinationId(existingActivity.destinationId || (destinations.length > 0 ? destinations[0].id : ""));
             // Format datetime-local requires YYYY-MM-DDThh:mm format
-            setStartDate(format(existingActivity.startDate, "yyyy-MM-dd'T'HH:mm"));
-            setEndDate(existingActivity.endDate ? format(existingActivity.endDate, "yyyy-MM-dd'T'HH:mm") : "");
+            if (typeof existingActivity.startDate === 'string') {
+                setStartDate(existingActivity.startDate);
+            } else {
+                setStartDate(toNaiveISOString(existingActivity.startDate));
+            }
+            if (existingActivity.endDate) {
+                if (typeof existingActivity.endDate === 'string') {
+                    setEndDate(existingActivity.endDate);
+                } else {
+                    setEndDate(toNaiveISOString(existingActivity.endDate));
+                }
+            } else {
+                setEndDate("");
+            }
         } else {
             setTitle("");
             setDescription("");
@@ -81,12 +94,12 @@ export function ActivityModal({ isOpen, onClose, onSave, destinations, tripId, e
                 description,
                 location,
                 type,
-                startDate: new Date(startDate),
+                startDate: startDate,
             };
             
             // Solo agregar endDate si tiene valor (Firebase no acepta undefined)
             if (endDate) {
-                activityData.endDate = new Date(endDate);
+                activityData.endDate = endDate;
             }
             
             await onSave(activityData);
