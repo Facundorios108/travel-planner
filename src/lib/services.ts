@@ -468,16 +468,38 @@ export const travelService = {
 
         const expenses = snapshot.docs.map((doc) => {
             const data = doc.data();
+            // Handle date field: may be Firestore Timestamp or string
+            let parsedDate: Date;
+            if (data.date) {
+                parsedDate = typeof data.date === 'string'
+                    ? new Date(data.date + (data.date.includes('T') ? '' : 'T12:00:00'))
+                    : data.date.toDate();
+            } else {
+                parsedDate = new Date();
+            }
+            // Handle createdAt field: may be Firestore Timestamp or string
+            let parsedCreatedAt: Date;
+            if (data.createdAt) {
+                parsedCreatedAt = typeof data.createdAt === 'string'
+                    ? new Date(data.createdAt)
+                    : data.createdAt.toDate();
+            } else {
+                parsedCreatedAt = new Date();
+            }
             return {
                 id: doc.id,
                 ...data,
-                date: data.date?.toDate(),
-                createdAt: data.createdAt?.toDate(),
+                date: parsedDate,
+                createdAt: parsedCreatedAt,
             } as Expense;
         });
 
-        // Sort by date descending (newest first)
-        const sorted = expenses.sort((a, b) => b.date.getTime() - a.date.getTime());
+        // Sort by date descending (newest first), with fallback for invalid dates
+        const sorted = expenses.sort((a, b) => {
+            const timeA = a.date?.getTime?.() ?? 0;
+            const timeB = b.date?.getTime?.() ?? 0;
+            return timeB - timeA;
+        });
 
         // Cache for 10 minutes
         dataCache.set(cacheKey, sorted, 10 * 60 * 1000);

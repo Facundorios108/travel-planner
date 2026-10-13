@@ -189,10 +189,10 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
     const handleSaveActivity = async (data: Omit<Activity, "id">) => {
         if (editingActivity) {
             await travelService.updateActivity(editingActivity.id, data);
-            setActivities(activities.map(a => a.id === editingActivity.id ? { ...a, ...data } : a));
+            setActivities(prev => prev.map(a => a.id === editingActivity.id ? { ...a, ...data } : a));
         } else {
             const id = await travelService.addActivity(data);
-            setActivities([...activities, { ...data, id }].sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))));
+            setActivities(prev => [...prev, { ...data, id }].sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))));
         }
     };
 
@@ -203,7 +203,7 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             message: "¿Estás seguro de que deseas eliminar esta actividad?",
             onConfirm: async () => {
                 await travelService.deleteActivity(id);
-                setActivities(activities.filter(a => a.id !== id));
+                setActivities(prev => prev.filter(a => a.id !== id));
             }
         });
     };
@@ -257,8 +257,8 @@ export default function TripItinerary({ params }: { params: Promise<{ id: string
             message: `¿Estás seguro de que deseas eliminar "${destCity}" y todas sus actividades asociadas?`,
             onConfirm: async () => {
                 await travelService.deleteDestination(destId, tripId);
-                setDestinations(destinations.filter(d => d.id !== destId));
-                setActivities(activities.filter(a => a.destinationId !== destId));
+                setDestinations(prev => prev.filter(d => d.id !== destId));
+                setActivities(prev => prev.filter(a => a.destinationId !== destId));
             }
         });
     };

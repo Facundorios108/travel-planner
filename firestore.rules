@@ -31,6 +31,21 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // User Profiles: Only the user themselves can read/write their profile
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Passports: Only the user themselves can read/write their passport data
+    match /passports/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // User Preferences: Only the user themselves can read/write their preferences
+    match /userPrefs/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Trips: Owners and collaborators can read/write
     match /trips/{tripId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
@@ -38,32 +53,39 @@ service cloud.firestore {
     }
 
     // Related collections: Tied to a trip
+    // On create: validate the new tripId
+    // On read/delete: validate the existing tripId
+    // On update: validate BOTH old and new tripId to prevent cross-trip data injection
     match /destinations/{id} {
-      allow read, write: if isSignedIn() && (
-        (request.method == 'create' && canAccessTripById(request.resource.data.tripId)) ||
-        (request.method != 'create' && canAccessTripById(resource.data.tripId))
-      );
+      allow create: if isSignedIn() && canAccessTripById(request.resource.data.tripId);
+      allow read, delete: if isSignedIn() && canAccessTripById(resource.data.tripId);
+      allow update: if isSignedIn() && 
+        canAccessTripById(resource.data.tripId) && 
+        canAccessTripById(request.resource.data.tripId);
     }
     
     match /activities/{id} {
-      allow read, write: if isSignedIn() && (
-        (request.method == 'create' && canAccessTripById(request.resource.data.tripId)) ||
-        (request.method != 'create' && canAccessTripById(resource.data.tripId))
-      );
+      allow create: if isSignedIn() && canAccessTripById(request.resource.data.tripId);
+      allow read, delete: if isSignedIn() && canAccessTripById(resource.data.tripId);
+      allow update: if isSignedIn() && 
+        canAccessTripById(resource.data.tripId) && 
+        canAccessTripById(request.resource.data.tripId);
     }
     
     match /expenses/{id} {
-      allow read, write: if isSignedIn() && (
-        (request.method == 'create' && canAccessTripById(request.resource.data.tripId)) ||
-        (request.method != 'create' && canAccessTripById(resource.data.tripId))
-      );
+      allow create: if isSignedIn() && canAccessTripById(request.resource.data.tripId);
+      allow read, delete: if isSignedIn() && canAccessTripById(resource.data.tripId);
+      allow update: if isSignedIn() && 
+        canAccessTripById(resource.data.tripId) && 
+        canAccessTripById(request.resource.data.tripId);
     }
     
     match /documents/{id} {
-      allow read, write: if isSignedIn() && (
-        (request.method == 'create' && canAccessTripById(request.resource.data.tripId)) ||
-        (request.method != 'create' && canAccessTripById(resource.data.tripId))
-      );
+      allow create: if isSignedIn() && canAccessTripById(request.resource.data.tripId);
+      allow read, delete: if isSignedIn() && canAccessTripById(resource.data.tripId);
+      allow update: if isSignedIn() && 
+        canAccessTripById(resource.data.tripId) && 
+        canAccessTripById(request.resource.data.tripId);
     }
   }
 }

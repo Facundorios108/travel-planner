@@ -225,12 +225,17 @@ export default function UserProfile({ user, trips, onSignOut }: UserProfileProps
         expiry: string;
         network: string;
         type: "credit" | "debit";
-    }>>(() => {
+    }>>([]);
+    // Load cards from localStorage after mount to avoid SSR hydration mismatch
+    React.useEffect(() => {
         try {
-            const stored = typeof window !== "undefined" ? localStorage.getItem("catchme_cards") : null;
-            return stored ? JSON.parse(stored) : [];
-        } catch { return []; }
-    });
+            const stored = localStorage.getItem("catchme_cards");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) setSavedCards(parsed);
+            }
+        } catch { /* ignore parse errors */ }
+    }, []);
     const [isAddingCard, setIsAddingCard] = useState(false);
     const [editingCardId, setEditingCardId] = useState<string | null>(null);
     const [revealedCardId, setRevealedCardId] = useState<string | null>(null);

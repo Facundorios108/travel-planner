@@ -93,8 +93,8 @@ export default function ExpensesPage() {
         try {
             const expenseData = { ...data, tripId };
             const id = await travelService.addExpense(expenseData);
-            setExpenses([...expenses, { ...expenseData, id }]);
-            setIsAddExpenseModalOpen(false);
+            setExpenses(prev => [...prev, { ...expenseData, id }]);
+            // Let the modal close itself after its success animation
             showToast("Gasto guardado correctamente.", "success");
         } catch (err) {
             console.error("Error saving expense:", err);
@@ -107,8 +107,8 @@ export default function ExpensesPage() {
         try {
             const updatedData = { ...selectedExpense, ...data };
             await travelService.updateExpense(selectedExpense.id, data, tripId);
-            setExpenses(expenses.map(e => e.id === selectedExpense.id ? updatedData : e));
-            setIsAddExpenseModalOpen(false);
+            setExpenses(prev => prev.map(e => e.id === selectedExpense.id ? updatedData : e));
+            // Let the modal close itself after its success animation
             setSelectedExpense(null);
             showToast("Gasto actualizado correctamente.", "success");
         } catch (err) {
@@ -121,7 +121,7 @@ export default function ExpensesPage() {
         if (!selectedExpense) return;
         try {
             await travelService.deleteExpense(selectedExpense.id, tripId);
-            setExpenses(expenses.filter(e => e.id !== selectedExpense.id));
+            setExpenses(prev => prev.filter(e => e.id !== selectedExpense.id));
             setIsAddExpenseModalOpen(false);
             setSelectedExpense(null);
             showToast("Gasto eliminado correctamente.", "success");

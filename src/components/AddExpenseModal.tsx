@@ -213,7 +213,7 @@ export default function AddExpenseModal({
                                             type="date"
                                             value={format(date, "yyyy-MM-dd")}
                                             onChange={(e) => {
-                                                if (e.target.value) setDate(new Date(e.target.value));
+                                                if (e.target.value) setDate(new Date(e.target.value + "T12:00:00"));
                                             }}
                                             className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800/80 rounded-2xl px-4 py-3 text-slate-900 dark:text-slate-100 text-xs font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                                         />
