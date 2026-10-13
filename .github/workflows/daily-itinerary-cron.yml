@@ -1,10 +1,10 @@
 name: Daily Itinerary Email
 
 on:
-  schedule:
-    # Runs every day at 8:00 AM UTC
-    - cron: "0 8 * * *"
-  # Allow manual trigger from GitHub UI
+  # Desactivado: Evita ejecuciones automáticas diarias programadas
+  # schedule:
+  #   - cron: "0 8 * * *"
+  # Permite ejecución manual únicamente si se desea probar en el futuro
   workflow_dispatch:
 
 jobs:
